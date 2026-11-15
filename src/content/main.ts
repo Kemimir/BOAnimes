@@ -42,9 +42,9 @@ function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'ap
       if (el) return { container: el, method: 'append' };
     }
 
-    const actionButton = Array.from(document.querySelectorAll('button, a')).find(button => {
+    const actionButton = Array.from(document.querySelectorAll('main button, main a, [data-t="series-page"] button, [data-t="series-page"] a')).find(button => {
       const text = button.textContent?.trim().toLowerCase() || '';
-      return /seguir|watchlist|bookmark|favorit/.test(text);
+      return !button.closest('header, nav') && /seguir|continuar assistindo|watch now/.test(text);
     }) as HTMLElement | undefined;
     const actionContainer = actionButton?.parentElement;
     if (actionContainer?.parentElement && actionContainer.parentElement.children.length > 1) {
