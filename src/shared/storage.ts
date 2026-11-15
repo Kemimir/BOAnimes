@@ -15,7 +15,9 @@ class StorageManager {
     
     if (data[STORAGE_KEY]) {
       Object.entries(data[STORAGE_KEY]).forEach(([key, value]) => {
-        this.cache.set(key, value as AnimeEntry);
+        const entry = value as AnimeEntry & { status?: string };
+        if (entry.status === 'plan_to_watch') entry.status = 'watch_later';
+        this.cache.set(key, entry as AnimeEntry);
       });
     }
     
@@ -87,7 +89,7 @@ class StorageManager {
     entry.episodesWatched = (entry.episodesWatched || 0) + 1;
     if (entry.totalEpisodes && entry.episodesWatched >= entry.totalEpisodes) {
       entry.status = 'watched';
-    } else if (entry.status === 'plan_to_watch') {
+    } else if (entry.status === 'watch_later') {
       entry.status = 'watching';
     }
     entry.lastUpdated = Date.now();

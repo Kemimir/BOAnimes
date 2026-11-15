@@ -104,10 +104,13 @@ export const crunchyrollAdapter: SiteAdapter = {
       { value: 'favorite', label: '★ Favorita', icon: '★', color: '#ffd700' },
       { value: 'watched', label: '✓ Assistida', icon: '✓', color: '#4caf50' },
       { value: 'watching', label: '▶ Assistindo', icon: '▶', color: '#2196f3' },
-      { value: 'plan_to_watch', label: '+ Pretendo assistir', icon: '+', color: '#ff9800' }
+      { value: 'watch_later', label: '+ Assistir depois', icon: '+', color: '#ff9800' }
     ];
+    const visibleStatuses = /\/watch\//i.test(window.location.pathname)
+      ? statuses.filter(status => status.value !== 'favorite' && status.value !== 'watch_later')
+      : statuses;
     
-    const currentStatus = entry?.status || 'plan_to_watch';
+    const currentStatus = entry?.status || 'watch_later';
     
     // Create a wrapper that isolates our styles from the page
     const wrapper = document.createElement('div');
@@ -135,7 +138,7 @@ export const crunchyrollAdapter: SiteAdapter = {
     label.style.cssText = 'font-weight: 700; color: #ff6b35; margin-right: 8px; align-self: center; font-size: 14px; white-space: nowrap;';
     wrapper.appendChild(label);
     
-    statuses.forEach(s => {
+    visibleStatuses.forEach(s => {
       const btn = document.createElement('button');
       btn.type = 'button';
       const icon = document.createElement('span');

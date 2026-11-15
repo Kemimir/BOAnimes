@@ -101,10 +101,10 @@ function createGenericAdapter(siteName: string, selectors: {
         { value: 'favorite', label: '★ Favorita', icon: '★', color: '#ffd700' },
         { value: 'watched', label: '✓ Assistida', icon: '✓', color: '#4caf50' },
         { value: 'watching', label: '▶ Assistindo', icon: '▶', color: '#2196f3' },
-        { value: 'plan_to_watch', label: '+ Pretendo assistir', icon: '+', color: '#ff9800' }
+        { value: 'watch_later', label: '+ Assistir depois', icon: '+', color: '#ff9800' }
       ];
       
-      const currentStatus = entry?.status || 'plan_to_watch';
+    const currentStatus = entry?.status || 'watch_later';
       
       const wrapper = document.createElement('div');
       wrapper.className = 'crunchyboa-status-widget';

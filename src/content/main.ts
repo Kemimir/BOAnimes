@@ -10,6 +10,45 @@ let observer: MutationObserver | null = null;
 let initialized = false;
 let lastEndedEpisode = 0;
 
+async function enhanceHomeCards(): Promise<void> {
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href*="/series/"]'));
+  for (const link of links) {
+    const match = link.href.match(/\/series\/([A-Z0-9]+)/i);
+    if (!match || link.querySelector('.crunchyboa-card-action')) continue;
+    const card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
+    if (!card) continue;
+    if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+    const id = match[1];
+    const entry = await storage.get(`crunchyroll:${id}`);
+    const button = document.createElement('button');
+    button.className = 'crunchyboa-card-action';
+    button.type = 'button';
+    button.textContent = entry?.status === 'watch_later' ? '✓' : '+';
+    button.title = entry?.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
+    button.setAttribute('aria-label', button.title);
+    button.addEventListener('click', async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const current = await storage.get(`crunchyroll:${id}`);
+      const next: AnimeEntry = current || {
+        id,
+        title: link.textContent?.trim() || 'Série Crunchyroll',
+        coverUrl: card.querySelector<HTMLImageElement>('img')?.src,
+        site: 'crunchyroll',
+        siteUrl: window.location.origin,
+        status: 'watch_later',
+        episodesWatched: 0,
+        lastUpdated: Date.now()
+      };
+      next.status = next.status === 'watch_later' ? 'watching' : 'watch_later';
+      await storage.set(next);
+      button.textContent = next.status === 'watch_later' ? '✓' : '+';
+      button.title = next.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
+    });
+    card.appendChild(button);
+  }
+}
+
 function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'append' | 'before' | 'after'; reference?: HTMLElement } | null {
   if (currentAdapter?.name === 'crunchyroll') {
     const isWatchPage = /\/watch\//i.test(window.location.pathname);
@@ -150,7 +189,7 @@ async function incrementEpisode(): Promise<void> {
   currentEntry.episodesWatched = (currentEntry.episodesWatched || 0) + 1;
   if (currentEntry.totalEpisodes && currentEntry.episodesWatched >= currentEntry.totalEpisodes) {
     currentEntry.status = 'watched';
-  } else if (currentEntry.status === 'plan_to_watch') {
+  } else if (currentEntry.status === 'watch_later') {
     currentEntry.status = 'watching';
   }
   currentEntry.lastUpdated = Date.now();
@@ -236,6 +275,9 @@ async function detectAndInitialize(): Promise<void> {
     currentAdapter = crunchyrollAdapter;
     if (!/(series|watch)\//i.test(window.location.pathname)) {
       console.log('[CrunchyBoa] Skipping non-series Crunchyroll page');
+      await enhanceHomeCards();
+      const homeObserver = new MutationObserver(() => { void enhanceHomeCards(); });
+      homeObserver.observe(document.body, { childList: true, subtree: true });
       return;
     }
     document.documentElement.classList.add(/\/watch\//i.test(window.location.pathname) ? 'crunchyboa-watch-page' : 'crunchyboa-series-page');
@@ -276,7 +318,7 @@ async function detectAndInitialize(): Promise<void> {
       coverUrl: cover || undefined,
       site: currentAdapter.name,
       siteUrl: window.location.origin,
-      status: 'plan_to_watch',
+      status: 'watch_later',
       episodesWatched: Math.max(watchedEpisodes, currentEp ? currentEp.number - 1 : 0),
       totalEpisodes: episodes.length || undefined,
       lastUpdated: Date.now()
@@ -335,7 +377,7 @@ async function detectAndInitialize(): Promise<void> {
       currentEntry.episodesWatched = newEp.number - 1;
       if (currentEntry.totalEpisodes && currentEntry.episodesWatched >= currentEntry.totalEpisodes) {
         currentEntry.status = 'watched';
-      } else if (currentEntry.status === 'plan_to_watch') {
+      } else if (currentEntry.status === 'watch_later') {
         currentEntry.status = 'watching';
       }
       changed = true;

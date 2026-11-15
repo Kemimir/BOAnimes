@@ -10,14 +10,14 @@ const statusLabels: Record<AnimeStatus, string> = {
   favorite: 'Favorita',
   watched: 'Assistida',
   watching: 'Assistindo',
-  plan_to_watch: 'Pretendo assistir'
+  watch_later: 'Assistir depois'
 };
 
 const statusIcons: Record<AnimeStatus, string> = {
   favorite: '★',
   watched: '✓',
   watching: '▶',
-  plan_to_watch: '+'
+  watch_later: '+'
 };
 
 async function init(): Promise<void> {
@@ -132,7 +132,7 @@ function renderAll(): void {
   renderList('favorite');
   renderList('watched');
   renderList('watching');
-  renderList('plan');
+  renderList('later');
 }
 
 function renderList(tabName: string): void {
@@ -144,7 +144,7 @@ function renderList(tabName: string): void {
       favorite: 'favorite',
       watched: 'watched',
       watching: 'watching',
-      plan: 'plan_to_watch'
+      later: 'watch_later'
     };
     entries = tabName === 'favorite'
       ? entries.filter(e => e.favorite || e.status === 'favorite')
@@ -187,7 +187,7 @@ function getEmptyMessage(tab: string): string {
     favorite: 'Nenhuma favorita. Clique na estrela em uma série para marcar.',
     watched: 'Nenhuma série marcada como assistida.',
     watching: 'Nenhuma série em andamento.',
-    plan: 'Nenhuma série na lista "pretendo assistir".'
+    later: 'Nenhuma série na lista "assistir depois".'
   };
   return messages[tab] || messages.all;
 }
@@ -217,7 +217,7 @@ function createCard(entry: AnimeEntry): string {
           <button class="action-btn ${entry.favorite ? 'primary' : 'secondary'}" data-action="favorite" data-id="${entry.id}">${entry.favorite ? '★ Favoritado' : '☆ Favoritar'}</button>
           ${entry.status !== 'watched' ? `<button class="action-btn primary" data-action="watched" data-id="${entry.id}">✓ Marcar assistida</button>` : ''}
           ${entry.status !== 'watching' ? `<button class="action-btn secondary" data-action="watching" data-id="${entry.id}">▶ Assistindo</button>` : ''}
-          ${entry.status !== 'plan_to_watch' ? `<button class="action-btn secondary" data-action="plan" data-id="${entry.id}">+ Pretendo</button>` : ''}
+          ${entry.status !== 'watch_later' ? `<button class="action-btn secondary" data-action="later" data-id="${entry.id}">+ Assistir depois</button>` : ''}
           <button class="action-btn danger" data-action="remove" data-id="${entry.id}" style="width:auto; padding:6px 10px;">🗑</button>
         </div>
       </div>
@@ -233,7 +233,7 @@ async function handleAction(action: string, id: string): Promise<void> {
     favorite: 'favorite',
     watched: 'watched',
     watching: 'watching',
-    plan: 'plan_to_watch'
+    later: 'watch_later'
   };
   
   if (action === 'remove') {

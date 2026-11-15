@@ -1,4 +1,4 @@
-export type AnimeStatus = 'favorite' | 'watched' | 'plan_to_watch' | 'watching';
+export type AnimeStatus = 'favorite' | 'watched' | 'watch_later' | 'watching';
 
 export interface AnimeEntry {
   id: string;
