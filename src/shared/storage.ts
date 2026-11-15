@@ -17,6 +17,10 @@ class StorageManager {
       Object.entries(data[STORAGE_KEY]).forEach(([key, value]) => {
         const entry = value as AnimeEntry & { status?: string };
         if (entry.status === 'plan_to_watch') entry.status = 'watch_later';
+        if (entry.status === 'favorite') {
+          entry.favorite = true;
+          entry.status = 'watch_later';
+        }
         this.cache.set(key, entry as AnimeEntry);
       });
     }
