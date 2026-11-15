@@ -1,7 +1,6 @@
 /* CrunchyBoa - Visual Improvements for Crunchyroll & Other Anime Sites */
 
 /* ===== CRUNCHYROLL SPECIFIC ===== */
-@-moz-document domain("crunchyroll.com") {
   /* Remove premium upsells */
   .erc-watch-premium-upsell,
   .erc-modal-portal,
@@ -49,10 +48,8 @@
   ::-webkit-scrollbar-track { background: #1a1a1a; }
   ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: #ff6b35; }
-}
 
 /* ===== GENERIC ANIME SITES ===== */
-@-moz-document domain("animesorion.com"), domain("animesonlinecc.to"), domain("animefire.plus"), domain("otakuflix.com"), domain("animesonehd.com") {
   /* Remove common annoyances */
   .ads, .advertisement, .pub, .banner-ad, [id^="ad"], [class*="adsense"],
   .popup-overlay, .cookie-banner, .push-notification {
@@ -82,7 +79,6 @@
   
   /* Better typography */
   .anime-title, .entry-title, h1 { letter-spacing: -0.02em !important; }
-}
 
 /* ===== CRUNCHYBOA WIDGET STYLES ===== */
 .crunchyboa-status-widget {
