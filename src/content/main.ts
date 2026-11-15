@@ -23,6 +23,13 @@ function showToast(message: string): void {
   window.setTimeout(() => toast.remove(), 2200);
 }
 
+function setHomeActionIcon(button: HTMLElement, active: boolean, title: string): void {
+  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.75h12a1 1 0 0 1 1 1v16l-7-3.8-7 3.8v-16a1 1 0 0 1 1-1Z"/></svg>';
+  button.classList.toggle('is-active', active);
+  button.title = title;
+  button.setAttribute('aria-label', title);
+}
+
 async function enhanceHomeCards(): Promise<void> {
   if (homeEnhancementRunning) {
     homeEnhancementQueued = true;
@@ -46,6 +53,8 @@ async function enhanceHomeCards(): Promise<void> {
       const action = existingActions[0];
       card.appendChild(action);
       existingActions.slice(1).forEach(item => item.remove());
+      const entry = entries.get(`crunchyroll:${match[1]}`);
+      setHomeActionIcon(action, entry?.status === 'watch_later', entry?.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois');
       card.dataset.crunchyBoaCard = '1';
       continue;
     }
@@ -58,9 +67,7 @@ async function enhanceHomeCards(): Promise<void> {
     const button = document.createElement('button');
     button.className = 'crunchyboa-card-action';
     button.type = 'button';
-    button.textContent = entry?.status === 'watch_later' ? '✓' : '+';
-    button.title = entry?.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
-    button.setAttribute('aria-label', button.title);
+    setHomeActionIcon(button, entry?.status === 'watch_later', entry?.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois');
     if (entry?.favorite || entry?.status === 'watched' || entry?.status === 'watching') {
       const badge = document.createElement('span');
       badge.className = `crunchyboa-card-badge ${entry.favorite ? 'favorite' : entry.status}`;
@@ -84,8 +91,7 @@ async function enhanceHomeCards(): Promise<void> {
       };
       next.status = next.status === 'watch_later' ? 'watching' : 'watch_later';
       await storage.set(next);
-      button.textContent = next.status === 'watch_later' ? '✓' : '+';
-      button.title = next.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
+      setHomeActionIcon(button, next.status === 'watch_later', next.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois');
     });
       card.appendChild(button);
     }

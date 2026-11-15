@@ -325,10 +325,24 @@
   background: rgba(18,18,23,.86) !important;
   color: #ff8133 !important;
   cursor: pointer !important;
-  font-size: 20px !important;
-  line-height: 1 !important;
+  padding: 7px !important;
   backdrop-filter: blur(10px) !important;
   transition: transform .2s ease, background .2s ease !important;
+}
+
+.crunchyboa-card-action svg {
+  display: block !important;
+  width: 16px !important;
+  height: 16px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+  stroke-linejoin: round !important;
+}
+
+.crunchyboa-card-action.is-active {
+  background: rgba(255,129,51,.2) !important;
+  border-color: #ff8133 !important;
 }
 
 .crunchyboa-card-action:hover {
