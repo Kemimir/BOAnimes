@@ -177,6 +177,17 @@
 
 .crunchyboa-widget-label {
   letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.crunchyboa-collapsed .crunchyboa-status-button,
+.crunchyboa-collapsed .crunchyboa-progress {
+  display: none !important;
+}
+
+.crunchyboa-collapsed {
+  width: max-content !important;
+  min-width: 0 !important;
 }
 
 .crunchyboa-status-label {

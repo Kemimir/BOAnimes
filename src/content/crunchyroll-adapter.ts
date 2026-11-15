@@ -135,6 +135,17 @@ export const crunchyrollAdapter: SiteAdapter = {
     const label = document.createElement('span');
     label.className = 'crunchyboa-widget-label';
     label.textContent = 'CrunchyBoa';
+    label.title = 'Mostrar ou ocultar controles';
+    label.setAttribute('role', 'button');
+    label.tabIndex = 0;
+    const toggleControls = () => wrapper.classList.toggle('crunchyboa-collapsed');
+    label.addEventListener('click', toggleControls);
+    label.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleControls();
+      }
+    });
     label.style.cssText = 'font-weight: 700; color: #ff6b35; margin-right: 8px; align-self: center; font-size: 14px; white-space: nowrap;';
     wrapper.appendChild(label);
     
