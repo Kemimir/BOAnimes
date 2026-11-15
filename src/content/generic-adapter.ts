@@ -168,7 +168,9 @@ function createGenericAdapter(siteName: string, selectors: {
           btn.style.transform = 'scale(1)';
         });
         btn.addEventListener('click', (e) => {
+          if (!e.isTrusted) return;
           e.stopPropagation();
+          e.stopImmediatePropagation();
           onUpdate(s.value);
         });
         

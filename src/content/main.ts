@@ -76,8 +76,10 @@ async function enhanceHomeCards(): Promise<void> {
       card.appendChild(badge);
     }
     button.addEventListener('click', async event => {
+      if (!event.isTrusted) return;
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
       const current = await storage.get(`crunchyroll:${id}`);
       const next: AnimeEntry = current || {
         id,

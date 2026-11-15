@@ -195,8 +195,10 @@ export const crunchyrollAdapter: SiteAdapter = {
         btn.style.transform = 'scale(1)';
       });
       btn.addEventListener('click', (e) => {
+        if (!e.isTrusted) return;
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onUpdate(s.value);
       }, true);
       
