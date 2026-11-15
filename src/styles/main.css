@@ -126,6 +126,15 @@
   white-space: nowrap !important;
 }
 
+.crunchyboa-actions-widget .crunchyboa-status-label {
+  display: none;
+}
+
+.crunchyboa-actions-widget .crunchyboa-status-button {
+  width: 34px !important;
+  padding: 0 !important;
+}
+
 .crunchyboa-actions-widget .crunchyboa-widget-label {
   display: none;
 }

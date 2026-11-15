@@ -64,7 +64,7 @@ export const crunchyrollAdapter: SiteAdapter = {
     const episodes: EpisodeInfo[] = [];
 
     const seen = new Set<string>();
-    $$('[data-t="episode-item"], [data-testid*="episode"], .episode-item, .season-episodes a[href*="/watch/"], a[href*="/watch/"]', doc)
+    $$('[data-t="episode-item"], [data-t="episode-card"], [data-testid*="episode"], [class*="episode-card"], .episode-item, .season-episodes a[href*="/watch/"], a[href*="/watch/"]', doc)
       .forEach((el, idx) => {
         const link = el.matches('a[href*="/watch/"]') ? el : el.querySelector('a[href*="/watch/"]');
         const href = getAttr(link, 'href');
@@ -73,11 +73,14 @@ export const crunchyrollAdapter: SiteAdapter = {
         if (seen.has(url)) return;
         seen.add(url);
         const title = getText(link?.querySelector('[data-t="episode-title"], [data-testid*="episode-title"], .episode-title, .ellipsized')) || getText(link);
+        const number = Number(el.getAttribute('data-episode-number') || link?.getAttribute('data-episode-number')) || episodeNumber(title, href, idx + 1);
+        const progress = el.querySelector('[role="progressbar"], [data-t*="progress"], [class*="progress"]');
+        const progressValue = Number(progress?.getAttribute('aria-valuenow') || progress?.getAttribute('data-progress') || 0);
         episodes.push({
-          number: episodeNumber(title, href, idx + 1),
+          number,
           title: title || undefined,
           url,
-          watched: el.classList.contains('watched') || el.getAttribute('data-state') === 'watched' || el.querySelector('[data-t="watched-badge"], [data-testid*="watched"]') !== null
+          watched: el.classList.contains('watched') || el.getAttribute('data-state') === 'watched' || /watched|assistid/i.test(el.getAttribute('aria-label') || '') || progressValue >= 100 || el.querySelector('[data-t="watched-badge"], [data-testid*="watched"], [class*="watched"]') !== null
         });
       });
     
@@ -135,7 +138,13 @@ export const crunchyrollAdapter: SiteAdapter = {
     statuses.forEach(s => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = `${s.icon} ${s.label.replace(/^[^ ]+\s*/, '')}`;
+      const icon = document.createElement('span');
+      icon.className = 'crunchyboa-status-icon';
+      icon.textContent = s.icon;
+      const text = document.createElement('span');
+      text.className = 'crunchyboa-status-label';
+      text.textContent = s.label.replace(/^[^ ]+\s*/, '');
+      btn.append(icon, text);
       btn.className = 'crunchyboa-status-button';
       btn.title = s.label;
       btn.setAttribute('aria-label', s.label);

@@ -258,6 +258,7 @@ async function detectAndInitialize(): Promise<void> {
   const cover = currentAdapter.getSeriesCover(document);
   const episodes = currentAdapter.getEpisodeList(document);
   const currentEp = currentAdapter.getCurrentEpisode(document);
+  const watchedEpisodes = episodes.filter(episode => episode.watched).length;
   
   console.log('[CrunchyBoa] Title:', title, 'Episodes:', episodes.length, 'Current ep:', currentEp?.number);
   
@@ -271,7 +272,7 @@ async function detectAndInitialize(): Promise<void> {
       site: currentAdapter.name,
       siteUrl: window.location.origin,
       status: 'plan_to_watch',
-      episodesWatched: 0,
+      episodesWatched: Math.max(watchedEpisodes, currentEp ? currentEp.number - 1 : 0),
       totalEpisodes: episodes.length || undefined,
       lastUpdated: Date.now()
     };
@@ -281,6 +282,9 @@ async function detectAndInitialize(): Promise<void> {
     if (cover) currentEntry.coverUrl = cover;
     if (episodes.length > 0 && !currentEntry.totalEpisodes) {
       currentEntry.totalEpisodes = episodes.length;
+    }
+    if (watchedEpisodes > (currentEntry.episodesWatched || 0)) {
+      currentEntry.episodesWatched = watchedEpisodes;
     }
     if (currentEp && !currentEntry.episodesWatched) {
       currentEntry.episodesWatched = Math.max(0, currentEp.number - 1);
@@ -306,6 +310,7 @@ async function detectAndInitialize(): Promise<void> {
     const newTitle = currentAdapter!.getSeriesTitle(document);
     const newEpisodes = currentAdapter!.getEpisodeList(document);
     const newEp = currentAdapter!.getCurrentEpisode(document);
+    const watchedCount = newEpisodes.filter(episode => episode.watched).length;
     bindVideoEndHandlers();
     
     let changed = false;
@@ -315,6 +320,10 @@ async function detectAndInitialize(): Promise<void> {
     }
     if (newEpisodes.length > 0 && (!currentEntry.totalEpisodes || newEpisodes.length > currentEntry.totalEpisodes)) {
       currentEntry.totalEpisodes = newEpisodes.length;
+      changed = true;
+    }
+    if (watchedCount > (currentEntry.episodesWatched || 0)) {
+      currentEntry.episodesWatched = watchedCount;
       changed = true;
     }
     if (newEp && currentEntry.episodesWatched !== undefined && newEp.number - 1 > currentEntry.episodesWatched) {
