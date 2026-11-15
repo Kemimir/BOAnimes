@@ -109,6 +109,8 @@
 
 .crunchyboa-actions-widget {
   display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
   width: auto !important;
   max-width: 100% !important;
   margin: 0 0 0 10px !important;
@@ -117,6 +119,11 @@
   vertical-align: middle !important;
   border-radius: 9px !important;
   background: rgba(32, 32, 38, .72) !important;
+}
+
+.crunchyboa-actions-widget .crunchyboa-status-button {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
 }
 
 .crunchyboa-actions-widget .crunchyboa-widget-label {
