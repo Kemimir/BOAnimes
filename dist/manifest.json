@@ -1,7 +1,7 @@
 {
   "name": "CrunchyBoa - By Kemir",
   "version": "1.0.0",
-  "description": "Melhora a interface da Crunchyroll e adiciona rastreamento de séries (favoritas, assistidas, pretendo assistir) compatível com outros sites de anime",
+  "description": "Reorganiza a interface da Crunchyroll e rastreia séries com favoritos, assistidos e assistir depois",
   "author": "Kemir",
   "icons": {
     "16": "icons/icon.svg",
