@@ -12,6 +12,8 @@ export interface AnimeEntry {
   totalEpisodes?: number;
   lastUpdated: number;
   notes?: string;
+  anilistId?: number;
+  genres?: string[];
 }
 
 export interface SiteAdapter {

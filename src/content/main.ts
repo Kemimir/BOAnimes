@@ -169,6 +169,34 @@ async function loadEntry(seriesId: string, site: string): Promise<AnimeEntry | n
   return storage.get(key);
 }
 
+async function enrichFromAniList(entry: AnimeEntry): Promise<void> {
+  if (entry.anilistId || !entry.title || entry.title === 'Unknown Series') return;
+  try {
+    const response = await fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: 'query ($search: String) { Media(search: $search, type: ANIME) { id coverImage { large } genres } }',
+        variables: { search: entry.title }
+      })
+    });
+    if (!response.ok) return;
+    const payload = await response.json() as { data?: { Media?: { id?: number; coverImage?: { large?: string }; genres?: string[] } } };
+    const media = payload.data?.Media;
+    if (!media?.id) return;
+    entry.anilistId = media.id;
+    entry.genres = media.genres || [];
+    if (!entry.coverUrl && media.coverImage?.large) entry.coverUrl = media.coverImage.large;
+    await storage.set(entry);
+    if (currentEntry?.id === entry.id) {
+      currentEntry = entry;
+      renderUI();
+    }
+  } catch {
+    // Metadata enrichment must never block CrunchyBoa tracking.
+  }
+}
+
 async function saveEntry(entry: AnimeEntry): Promise<void> {
   await storage.set(entry);
   currentEntry = entry;
@@ -325,6 +353,7 @@ async function detectAndInitialize(): Promise<void> {
       lastUpdated: Date.now()
     };
     await saveEntry(currentEntry);
+    void enrichFromAniList(currentEntry);
   } else {
     if (title) currentEntry.title = title;
     if (cover) currentEntry.coverUrl = cover;
@@ -338,6 +367,7 @@ async function detectAndInitialize(): Promise<void> {
       currentEntry.episodesWatched = Math.max(0, currentEp.number - 1);
     }
     await saveEntry(currentEntry);
+    void enrichFromAniList(currentEntry);
   }
   
   injectionPoint = findInjectionPoint();

@@ -25,6 +25,7 @@
   ],
   "host_permissions": [
     "https://raw.githubusercontent.com/Kemimir/CrunchyBoa/main/*",
+    "https://graphql.anilist.co/*",
     "*://*.crunchyroll.com/*",
     "*://*.animesorion.com/*",
     "*://*.animesonlinecc.to/*",
