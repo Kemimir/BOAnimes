@@ -206,6 +206,7 @@ function createCard(entry: AnimeEntry): string {
         <div class="anime-meta">
           <span class="status-badge status-${entry.status}">${statusIcons[entry.status]} ${statusLabels[entry.status]}</span>
           <span>${entry.site}</span>
+          ${entry.anilistId ? `<a class="external-link" href="https://anilist.co/anime/${entry.anilistId}" target="_blank">AniList</a>` : ''}
           ${entry.totalEpisodes ? `<span>${entry.episodesWatched || 0}/${entry.totalEpisodes} eps</span>` : ''}
         </div>
         ${entry.totalEpisodes ? `

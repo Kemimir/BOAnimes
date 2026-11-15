@@ -341,6 +341,27 @@
   transform: translateY(-2px) !important;
 }
 
+.crunchyboa-card-badge {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 21 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 8px !important;
+  background: rgba(18,18,23,.9) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  color: #ff8133 !important;
+  font-weight: 800 !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.crunchyboa-card-badge.favorite { color: #ffd166 !important; }
+.crunchyboa-card-badge.watched { color: #7ee787 !important; }
+.crunchyboa-card-badge.watching { color: #77bdfb !important; }
+
 .crunchyboa-section-controls {
   display: flex !important;
   gap: 4px !important;

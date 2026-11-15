@@ -26,6 +26,13 @@ async function enhanceHomeCards(): Promise<void> {
     button.textContent = entry?.status === 'watch_later' ? '✓' : '+';
     button.title = entry?.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
     button.setAttribute('aria-label', button.title);
+    if (entry?.favorite || entry?.status === 'watched' || entry?.status === 'watching') {
+      const badge = document.createElement('span');
+      badge.className = `crunchyboa-card-badge ${entry.favorite ? 'favorite' : entry.status}`;
+      badge.textContent = entry.favorite ? '★' : entry.status === 'watched' ? '✓' : '▶';
+      badge.title = entry.favorite ? 'Favorita' : entry.status === 'watched' ? 'Assistida' : 'Assistindo';
+      card.appendChild(badge);
+    }
     button.addEventListener('click', async event => {
       event.preventDefault();
       event.stopPropagation();
