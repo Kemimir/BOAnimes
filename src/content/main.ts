@@ -9,8 +9,16 @@ let injectionPoint: { container: HTMLElement; method: 'prepend' | 'append' | 'be
 let observer: MutationObserver | null = null;
 let initialized = false;
 let lastEndedEpisode = 0;
+let homeEnhancementRunning = false;
+let homeEnhancementQueued = false;
 
 async function enhanceHomeCards(): Promise<void> {
+  if (homeEnhancementRunning) {
+    homeEnhancementQueued = true;
+    return;
+  }
+  homeEnhancementRunning = true;
+  const entries = new Map((await storage.getAll()).map(entry => [`${entry.site}:${entry.id}`, entry]));
   const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href*="/series/"]'));
   for (const link of links) {
     const match = link.href.match(/\/series\/([A-Z0-9]+)/i);
@@ -19,7 +27,7 @@ async function enhanceHomeCards(): Promise<void> {
     if (!card) continue;
     if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
     const id = match[1];
-    const entry = await storage.get(`crunchyroll:${id}`);
+    const entry = entries.get(`crunchyroll:${id}`);
     const button = document.createElement('button');
     button.className = 'crunchyboa-card-action';
     button.type = 'button';
@@ -53,6 +61,11 @@ async function enhanceHomeCards(): Promise<void> {
       button.title = next.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
     });
     card.appendChild(button);
+  }
+  homeEnhancementRunning = false;
+  if (homeEnhancementQueued) {
+    homeEnhancementQueued = false;
+    window.setTimeout(() => { void enhanceHomeCards(); }, 250);
   }
 }
 
@@ -353,7 +366,11 @@ async function detectAndInitialize(): Promise<void> {
       document.documentElement.classList.add('crunchyboa-home-page');
       await enhanceHomeCards();
       await enableHomeSectionOrder();
-      const homeObserver = new MutationObserver(() => { void enhanceHomeCards(); });
+      let homeObserverTimer = 0;
+      const homeObserver = new MutationObserver(() => {
+        window.clearTimeout(homeObserverTimer);
+        homeObserverTimer = window.setTimeout(() => { void enhanceHomeCards(); }, 400);
+      });
       homeObserver.observe(document.body, { childList: true, subtree: true });
       initialized = true;
       return;
