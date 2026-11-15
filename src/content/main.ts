@@ -275,6 +275,7 @@ async function detectAndInitialize(): Promise<void> {
     currentAdapter = crunchyrollAdapter;
     if (!/(series|watch)\//i.test(window.location.pathname)) {
       console.log('[CrunchyBoa] Skipping non-series Crunchyroll page');
+      document.documentElement.classList.add('crunchyboa-home-page');
       await enhanceHomeCards();
       const homeObserver = new MutationObserver(() => { void enhanceHomeCards(); });
       homeObserver.observe(document.body, { childList: true, subtree: true });

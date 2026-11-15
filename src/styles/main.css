@@ -397,8 +397,26 @@
 
 /* CrunchyBoa surface pass: applies only to series and watch routes. */
 html.crunchyboa-series-page body,
-html.crunchyboa-watch-page body {
+html.crunchyboa-watch-page body,
+html.crunchyboa-home-page body {
   background: #0a0a0d !important;
+}
+
+html.crunchyboa-home-page header,
+html.crunchyboa-series-page header,
+html.crunchyboa-watch-page header {
+  background: rgba(16,16,20,.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.22) !important;
+  backdrop-filter: blur(14px) saturate(130%) !important;
+}
+
+html.crunchyboa-home-page a[href*="/series/"] {
+  transition: transform .2s ease, filter .2s ease !important;
+}
+
+html.crunchyboa-home-page a[href*="/series/"]:hover {
+  filter: brightness(1.08) !important;
 }
 
 html.crunchyboa-series-page [data-t="season-episodes"],
