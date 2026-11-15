@@ -8,9 +8,10 @@ class StorageManager {
   async init(): Promise<void> {
     if (this.initialized) return;
     
-    const [data, settings] = await Promise.all([
+    const [data, settings, synced] = await Promise.all([
       chrome.storage.local.get(STORAGE_KEY),
-      chrome.storage.local.get(SETTINGS_KEY)
+      chrome.storage.local.get(SETTINGS_KEY),
+      chrome.storage.sync.get([STORAGE_KEY, SETTINGS_KEY])
     ]);
     
     if (data[STORAGE_KEY]) {
@@ -26,6 +27,11 @@ class StorageManager {
     }
     
     this.settingsCache = settings[SETTINGS_KEY] ? { ...DEFAULT_SETTINGS, ...settings[SETTINGS_KEY] } : DEFAULT_SETTINGS;
+    if (this.settingsCache.syncAcrossDevices && synced[STORAGE_KEY]) {
+      this.cache.clear();
+      Object.entries(synced[STORAGE_KEY]).forEach(([key, value]) => this.cache.set(key, value as AnimeEntry));
+      if (synced[SETTINGS_KEY]) this.settingsCache = { ...this.settingsCache, ...synced[SETTINGS_KEY] };
+    }
     this.initialized = true;
   }
 
@@ -68,6 +74,7 @@ class StorageManager {
     const obj: Record<string, AnimeEntry> = {};
     this.cache.forEach((v, k) => { obj[k] = v; });
     await chrome.storage.local.set({ [STORAGE_KEY]: obj });
+    if (this.settingsCache?.syncAcrossDevices) await chrome.storage.sync.set({ [STORAGE_KEY]: obj });
   }
 
   async updateStatus(id: string, status: AnimeEntry['status'], episodesWatched?: number): Promise<AnimeEntry | null> {
@@ -126,6 +133,11 @@ class StorageManager {
     this.ensureInit();
     this.settingsCache = { ...this.settingsCache!, ...partial };
     await chrome.storage.local.set({ [SETTINGS_KEY]: this.settingsCache });
+    if (this.settingsCache.syncAcrossDevices) {
+      const data: Record<string, AnimeEntry> = {};
+      this.cache.forEach((value, key) => { data[key] = value; });
+      await chrome.storage.sync.set({ [SETTINGS_KEY]: this.settingsCache, [STORAGE_KEY]: data });
+    }
     return this.settingsCache;
   }
 
