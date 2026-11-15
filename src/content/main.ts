@@ -28,18 +28,14 @@ function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'ap
       }
     }
 
-    const navigationSelectors = [
-      '[data-t="header"]',
-      'header[role="banner"]',
-      'header'
-    ];
-
-    for (const sel of navigationSelectors) {
-      const el = document.querySelector(sel) as HTMLElement;
-      if (el && !el.querySelector('.crunchyboa-status-widget')) {
-        console.log('[CrunchyBoa] Injection point (navigation):', sel);
-        return { container: el, method: 'append' };
-      }
+    const actionButton = Array.from(document.querySelectorAll('button')).find(button => {
+      const text = button.textContent?.trim().toLowerCase() || '';
+      return /seguir|watchlist|bookmark|favorit/.test(text);
+    }) as HTMLElement | undefined;
+    const actionContainer = actionButton?.parentElement;
+    if (actionContainer?.parentElement && actionContainer.parentElement.children.length > 1) {
+      console.log('[CrunchyBoa] Injection point (series actions)');
+      return { container: actionContainer.parentElement, method: 'append' };
     }
 
     // Strategy 1: Try to insert after the series header/title area
@@ -178,8 +174,8 @@ function renderUI(): void {
   
   if (!widget) return;
 
-  if (container.closest('header')) {
-    widget.classList.add('crunchyboa-header-widget');
+  if (method === 'append' && !reference && !container.matches('.video-player-wrapper, .video-player, #player')) {
+    widget.classList.add('crunchyboa-actions-widget');
   }
   if (reference?.matches('[data-t="video-player"], [data-testid*="video-player"], .video-player-wrapper, .video-player, #player')) {
     widget.classList.add('crunchyboa-player-widget');

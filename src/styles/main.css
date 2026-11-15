@@ -107,6 +107,36 @@
   gap: 8px !important;
 }
 
+.crunchyboa-actions-widget {
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 0 0 10px !important;
+  padding: 6px 8px !important;
+  gap: 5px !important;
+  vertical-align: middle !important;
+  border-radius: 9px !important;
+  background: rgba(32, 32, 38, .72) !important;
+}
+
+.crunchyboa-actions-widget .crunchyboa-widget-label {
+  display: none;
+}
+
+.crunchyboa-actions-widget .crunchyboa-status-button {
+  width: auto !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  border-width: 1px !important;
+  border-radius: 7px !important;
+  font-size: 12px !important;
+}
+
+.crunchyboa-actions-widget .crunchyboa-progress {
+  display: none !important;
+}
+
 .crunchyboa-player-widget .crunchyboa-widget-label {
   font-size: 13px !important;
   margin-right: 8px !important;
