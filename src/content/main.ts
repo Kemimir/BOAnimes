@@ -12,6 +12,7 @@ let lastEndedEpisode = 0;
 
 function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'append' | 'before' | 'after'; reference?: HTMLElement } | null {
   if (currentAdapter?.name === 'crunchyroll') {
+    const isWatchPage = /\/watch\//i.test(window.location.pathname);
     const playerSelectors = [
       '[data-t="video-player"]',
       '[data-testid*="video-player"]',
@@ -20,15 +21,28 @@ function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'ap
       '#player'
     ];
 
-    for (const sel of playerSelectors) {
-      const el = document.querySelector(sel) as HTMLElement;
-      if (el?.parentElement) {
-        console.log('[CrunchyBoa] Injection point (below player):', sel);
-        return { container: el.parentElement, method: 'after', reference: el };
+    if (isWatchPage) {
+      for (const sel of playerSelectors) {
+        const el = document.querySelector(sel) as HTMLElement;
+        if (el?.parentElement) {
+          console.log('[CrunchyBoa] Injection point (below player):', sel);
+          return { container: el.parentElement, method: 'after', reference: el };
+        }
       }
+      return null;
     }
 
-    const actionButton = Array.from(document.querySelectorAll('button')).find(button => {
+    const actionSelectors = [
+      '[data-t="series-actions"]',
+      '[data-testid="series-actions"]',
+      '[data-testid*="watchlist"]'
+    ];
+    for (const sel of actionSelectors) {
+      const el = document.querySelector(sel) as HTMLElement;
+      if (el) return { container: el, method: 'append' };
+    }
+
+    const actionButton = Array.from(document.querySelectorAll('button, a')).find(button => {
       const text = button.textContent?.trim().toLowerCase() || '';
       return /seguir|watchlist|bookmark|favorit/.test(text);
     }) as HTMLElement | undefined;
@@ -201,6 +215,18 @@ function renderUI(): void {
   console.log('[CrunchyBoa] UI rendered at:', method, reference?.className || container.tagName);
 }
 
+function refreshInjectionPoint(): void {
+  if (!currentAdapter || !currentEntry) return;
+  const next = findInjectionPoint();
+  if (!next) return;
+  const widget = injectionPoint?.container.querySelector('.crunchyboa-status-widget');
+  if (!widget || next.container !== injectionPoint?.container || next.reference !== injectionPoint?.reference) {
+    widget?.remove();
+    injectionPoint = next;
+    renderUI();
+  }
+}
+
 async function detectAndInitialize(): Promise<void> {
   if (initialized) return;
   
@@ -275,6 +301,7 @@ async function detectAndInitialize(): Promise<void> {
   
   observer = currentAdapter.observeMutations(() => {
     if (!currentEntry) return;
+    refreshInjectionPoint();
     
     const newTitle = currentAdapter!.getSeriesTitle(document);
     const newEpisodes = currentAdapter!.getEpisodeList(document);
