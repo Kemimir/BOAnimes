@@ -12,6 +12,16 @@ let lastEndedEpisode = 0;
 let homeEnhancementRunning = false;
 let homeEnhancementQueued = false;
 
+function showToast(message: string): void {
+  document.querySelector('.crunchyboa-toast')?.remove();
+  const toast = document.createElement('div');
+  toast.className = 'crunchyboa-toast';
+  toast.setAttribute('role', 'status');
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 2200);
+}
+
 async function enhanceHomeCards(): Promise<void> {
   if (homeEnhancementRunning) {
     homeEnhancementQueued = true;
@@ -269,6 +279,7 @@ async function updateStatus(status: AnimeStatus): Promise<void> {
   else currentEntry.status = status;
   currentEntry.lastUpdated = Date.now();
   await saveEntry(currentEntry);
+  showToast(status === 'favorite' ? (currentEntry.favorite ? 'Adicionada às favoritas' : 'Removida das favoritas') : `Status: ${status}`);
 }
 
 async function incrementEpisode(): Promise<void> {
@@ -282,6 +293,7 @@ async function incrementEpisode(): Promise<void> {
   }
   currentEntry.lastUpdated = Date.now();
   await saveEntry(currentEntry);
+  showToast(`Progresso: ${currentEntry.episodesWatched} episódio(s)`);
 }
 
 function bindVideoEndHandlers(): void {

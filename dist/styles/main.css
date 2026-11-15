@@ -358,6 +358,29 @@
 .crunchyboa-card-badge.watched { color: #7ee787 !important; }
 .crunchyboa-card-badge.watching { color: #77bdfb !important; }
 
+.crunchyboa-toast {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 28px !important;
+  z-index: 2147483647 !important;
+  transform: translateX(-50%) !important;
+  padding: 10px 16px !important;
+  border: 1px solid rgba(255,129,51,.35) !important;
+  border-radius: 10px !important;
+  background: rgba(18,18,23,.94) !important;
+  color: #f5f4f2 !important;
+  box-shadow: 0 14px 38px rgba(0,0,0,.45) !important;
+  backdrop-filter: blur(14px) !important;
+  font: 600 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  pointer-events: none !important;
+  animation: crunchyboa-toast-in .2s ease-out !important;
+}
+
+@keyframes crunchyboa-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px) !important; }
+  to { opacity: 1; transform: translate(-50%, 0) !important; }
+}
+
 .crunchyboa-section-controls {
   display: flex !important;
   gap: 4px !important;
