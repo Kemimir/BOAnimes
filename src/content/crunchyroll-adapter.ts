@@ -149,7 +149,7 @@ export const crunchyrollAdapter: SiteAdapter = {
       btn.title = s.label;
       btn.setAttribute('aria-label', s.label);
       btn.dataset.status = s.value;
-      const isActive = s.value === currentStatus;
+      const isActive = s.value === 'favorite' ? Boolean(entry?.favorite) : s.value === currentStatus;
       btn.style.cssText = `
         display: inline-flex;
         align-items: center;

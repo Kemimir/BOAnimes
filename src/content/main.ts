@@ -138,8 +138,8 @@ async function saveEntry(entry: AnimeEntry): Promise<void> {
 
 async function updateStatus(status: AnimeStatus): Promise<void> {
   if (!currentEntry) return;
-  
-  currentEntry.status = status;
+  if (status === 'favorite') currentEntry.favorite = !currentEntry.favorite;
+  else currentEntry.status = status;
   currentEntry.lastUpdated = Date.now();
   await saveEntry(currentEntry);
 }
@@ -238,6 +238,7 @@ async function detectAndInitialize(): Promise<void> {
       console.log('[CrunchyBoa] Skipping non-series Crunchyroll page');
       return;
     }
+    document.documentElement.classList.add(/\/watch\//i.test(window.location.pathname) ? 'crunchyboa-watch-page' : 'crunchyboa-series-page');
   } else {
     currentAdapter = getAdapterForCurrentSite();
   }

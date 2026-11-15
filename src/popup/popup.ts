@@ -146,7 +146,9 @@ function renderList(tabName: string): void {
       watching: 'watching',
       plan: 'plan_to_watch'
     };
-    entries = entries.filter(e => e.status === statusMap[tabName]);
+    entries = tabName === 'favorite'
+      ? entries.filter(e => e.favorite || e.status === 'favorite')
+      : entries.filter(e => e.status === statusMap[tabName]);
   }
   
   if (currentSiteFilter !== 'all') {
@@ -212,7 +214,7 @@ function createCard(entry: AnimeEntry): string {
           </div>
         ` : ''}
         <div class="actions">
-          ${entry.status !== 'favorite' ? `<button class="action-btn secondary" data-action="favorite" data-id="${entry.id}">★ Favoritar</button>` : ''}
+          <button class="action-btn ${entry.favorite ? 'primary' : 'secondary'}" data-action="favorite" data-id="${entry.id}">${entry.favorite ? '★ Favoritado' : '☆ Favoritar'}</button>
           ${entry.status !== 'watched' ? `<button class="action-btn primary" data-action="watched" data-id="${entry.id}">✓ Marcar assistida</button>` : ''}
           ${entry.status !== 'watching' ? `<button class="action-btn secondary" data-action="watching" data-id="${entry.id}">▶ Assistindo</button>` : ''}
           ${entry.status !== 'plan_to_watch' ? `<button class="action-btn secondary" data-action="plan" data-id="${entry.id}">+ Pretendo</button>` : ''}
@@ -237,6 +239,10 @@ async function handleAction(action: string, id: string): Promise<void> {
   if (action === 'remove') {
     await storage.remove(id);
     allEntries = allEntries.filter(e => e.id !== id);
+  } else if (action === 'favorite') {
+    entry.favorite = !entry.favorite;
+    entry.lastUpdated = Date.now();
+    await storage.set(entry);
   } else if (statusMap[action]) {
     entry.status = statusMap[action];
     entry.lastUpdated = Date.now();

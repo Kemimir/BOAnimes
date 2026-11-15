@@ -7,6 +7,7 @@ export interface AnimeEntry {
   site: string;
   siteUrl: string;
   status: AnimeStatus;
+  favorite?: boolean;
   episodesWatched?: number;
   totalEpisodes?: number;
   lastUpdated: number;
