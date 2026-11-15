@@ -1,6 +1,6 @@
 {
   "name": "CrunchyBoa - By Kemir",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Reorganiza a interface da Crunchyroll e rastreia séries com favoritos, assistidos e assistir depois",
   "author": "Kemir",
   "icons": {
@@ -59,6 +59,7 @@
   ],
   "manifest_version": 3
 }
+
 
 
 
