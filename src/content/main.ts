@@ -49,6 +49,46 @@ async function enhanceHomeCards(): Promise<void> {
   }
 }
 
+async function enableHomeSectionOrder(): Promise<void> {
+  const sections = Array.from(document.querySelectorAll<HTMLElement>('main > section, main section[data-t="home-section"]'))
+    .filter(section => !section.dataset.crunchyBoaSection);
+  if (sections.length < 2) return;
+  const stored = await chrome.storage.local.get('crunchyboa_home_order');
+  const order = Array.isArray(stored.crunchyboa_home_order) ? stored.crunchyboa_home_order as string[] : [];
+  const key = (section: HTMLElement) => section.dataset.crunchyBoaSection || section.querySelector('h2,h3')?.textContent?.trim() || String(sections.indexOf(section));
+  sections.forEach(section => {
+    if (getComputedStyle(section).position === 'static') section.style.position = 'relative';
+    section.dataset.crunchyBoaSection = key(section);
+  });
+  const ordered = [...sections].sort((left, right) => (order.indexOf(key(left)) < 0 ? 999 : order.indexOf(key(left))) - (order.indexOf(key(right)) < 0 ? 999 : order.indexOf(key(right))));
+  const parent = sections[0].parentElement;
+  ordered.forEach(section => parent?.appendChild(section));
+  ordered.forEach((section, index) => {
+    const controls = document.createElement('div');
+    controls.className = 'crunchyboa-section-controls';
+    for (const [label, delta] of [['↑', -1], ['↓', 1]] as const) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.title = label === '↑' ? 'Mover seção para cima' : 'Mover seção para baixo';
+      button.addEventListener('click', async event => {
+        event.preventDefault();
+        const next = index + delta;
+        if (next < 0 || next >= ordered.length) return;
+        const sibling = ordered[next];
+        if (delta < 0) parent?.insertBefore(section, sibling);
+        else parent?.insertBefore(sibling, section);
+        const nextOrder = ordered.map(item => key(item));
+        await chrome.storage.local.set({ crunchyboa_home_order: nextOrder });
+        void enableHomeSectionOrder();
+      });
+      controls.appendChild(button);
+    }
+    section.dataset.crunchyBoaSection = key(section);
+    section.appendChild(controls);
+  });
+}
+
 function findInjectionPoint(): { container: HTMLElement; method: 'prepend' | 'append' | 'before' | 'after'; reference?: HTMLElement } | null {
   if (currentAdapter?.name === 'crunchyroll') {
     const isWatchPage = /\/watch\//i.test(window.location.pathname);
@@ -305,6 +345,7 @@ async function detectAndInitialize(): Promise<void> {
       console.log('[CrunchyBoa] Skipping non-series Crunchyroll page');
       document.documentElement.classList.add('crunchyboa-home-page');
       await enhanceHomeCards();
+      await enableHomeSectionOrder();
       const homeObserver = new MutationObserver(() => { void enhanceHomeCards(); });
       homeObserver.observe(document.body, { childList: true, subtree: true });
       return;
