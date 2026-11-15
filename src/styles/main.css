@@ -92,6 +92,41 @@
   animation: crunchyboa-slide-in 0.3s ease-out;
 }
 
+.crunchyboa-acrylic-panel {
+  background: rgba(32, 32, 38, .72) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .28), inset 0 1px rgba(255, 255, 255, .08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+  backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+.crunchyboa-player-widget {
+  display: grid !important;
+  grid-template-columns: auto repeat(4, minmax(112px, 1fr)) !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.crunchyboa-player-widget .crunchyboa-widget-label {
+  font-size: 13px !important;
+  margin-right: 8px !important;
+}
+
+.crunchyboa-player-widget .crunchyboa-status-button {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+.crunchyboa-player-widget .crunchyboa-progress {
+  grid-column: 1 / -1;
+  margin-top: 4px !important;
+}
+
 .crunchyboa-widget-label {
   letter-spacing: -0.01em;
 }
@@ -178,6 +213,14 @@
 
   .crunchyboa-header-widget .crunchyboa-widget-label {
     display: none;
+  }
+
+  .crunchyboa-player-widget {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .crunchyboa-player-widget .crunchyboa-widget-label {
+    grid-column: 1 / -1;
   }
 }
 

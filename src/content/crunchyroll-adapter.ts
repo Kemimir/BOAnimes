@@ -108,7 +108,7 @@ export const crunchyrollAdapter: SiteAdapter = {
     
     // Create a wrapper that isolates our styles from the page
     const wrapper = document.createElement('div');
-    wrapper.className = 'crunchyboa-status-widget';
+    wrapper.className = 'crunchyboa-status-widget crunchyboa-acrylic-panel';
     wrapper.style.cssText = `
       display: flex;
       flex-wrap: wrap;
@@ -127,14 +127,15 @@ export const crunchyrollAdapter: SiteAdapter = {
     `;
     
     const label = document.createElement('span');
-    label.textContent = 'CrunchyBoa: ';
+    label.className = 'crunchyboa-widget-label';
+    label.textContent = 'CrunchyBoa';
     label.style.cssText = 'font-weight: 700; color: #ff6b35; margin-right: 8px; align-self: center; font-size: 14px; white-space: nowrap;';
     wrapper.appendChild(label);
     
     statuses.forEach(s => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = s.icon;
+      btn.textContent = `${s.icon} ${s.label.replace(/^[^ ]+\s*/, '')}`;
       btn.className = 'crunchyboa-status-button';
       btn.title = s.label;
       btn.setAttribute('aria-label', s.label);
