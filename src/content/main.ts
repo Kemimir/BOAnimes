@@ -46,9 +46,11 @@ async function enhanceHomeCards(): Promise<void> {
       if (!match) continue;
       let card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
       if (card?.matches('a')) card = card.parentElement;
-      if (!card) card = link.parentElement;
+      if (!card && link.parentElement?.querySelector('img')) card = link.parentElement;
     if (!card) continue;
     card.classList.add('crunchyboa-home-card');
+    const existingBadges = Array.from(card.querySelectorAll<HTMLElement>('.crunchyboa-card-badge'));
+    existingBadges.slice(1).forEach(item => item.remove());
     const existingActions = Array.from(card.querySelectorAll<HTMLElement>('.crunchyboa-card-action'));
     if (existingActions.length > 0) {
       const action = existingActions[0];
