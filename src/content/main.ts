@@ -41,6 +41,14 @@ async function enhanceHomeCards(): Promise<void> {
       if (card?.matches('a')) card = card.parentElement;
       if (!card) card = link.parentElement;
     if (!card) continue;
+    const existingActions = Array.from(card.querySelectorAll<HTMLElement>('.crunchyboa-card-action'));
+    if (existingActions.length > 0) {
+      const action = existingActions[0];
+      card.appendChild(action);
+      existingActions.slice(1).forEach(item => item.remove());
+      card.dataset.crunchyBoaCard = '1';
+      continue;
+    }
     if (card.dataset.crunchyBoaCard === '1') continue;
     card.dataset.crunchyBoaCard = '1';
     processed += 1;
