@@ -159,6 +159,11 @@ class StorageManager {
     
     if (data.entries && Array.isArray(data.entries)) {
       for (const [key, entry] of data.entries) {
+        if (entry.status === 'plan_to_watch') entry.status = 'watch_later';
+        if (entry.status === 'favorite') {
+          entry.favorite = true;
+          entry.status = 'watch_later';
+        }
         this.cache.set(key, entry);
         count++;
       }
