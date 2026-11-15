@@ -89,6 +89,8 @@
   align-items: center !important;
   max-width: 760px !important;
   box-sizing: border-box !important;
+  pointer-events: auto !important;
+  user-select: none !important;
   animation: crunchyboa-slide-in 0.3s ease-out;
 }
 
@@ -221,6 +223,9 @@
 .crunchyboa-status-button {
   flex: 0 0 40px !important;
   padding: 0 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 2 !important;
   line-height: 1 !important;
 }
 

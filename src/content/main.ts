@@ -234,6 +234,10 @@ async function detectAndInitialize(): Promise<void> {
   
   if (hostname.includes('crunchyroll.com')) {
     currentAdapter = crunchyrollAdapter;
+    if (!\/(series|watch)\//i.test(window.location.pathname)) {
+      console.log('[CrunchyBoa] Skipping non-series Crunchyroll page');
+      return;
+    }
   } else {
     currentAdapter = getAdapterForCurrentSite();
   }
