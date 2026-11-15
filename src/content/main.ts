@@ -11,6 +11,7 @@ let initialized = false;
 let lastEndedEpisode = 0;
 let homeEnhancementRunning = false;
 let homeEnhancementQueued = false;
+let homeEnhancementTimer = 0;
 
 function showToast(message: string): void {
   document.querySelector('.crunchyboa-toast')?.remove();
@@ -28,13 +29,19 @@ async function enhanceHomeCards(): Promise<void> {
     return;
   }
   homeEnhancementRunning = true;
-  const entries = new Map((await storage.getAll()).map(entry => [`${entry.site}:${entry.id}`, entry]));
-  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href*="/series/"]'));
-  for (const link of links) {
-    const match = link.href.match(/\/series\/([A-Z0-9]+)/i);
-    if (!match || link.querySelector('.crunchyboa-card-action')) continue;
-    const card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
+  try {
+    const entries = new Map((await storage.getAll()).map(entry => [`${entry.site}:${entry.id}`, entry]));
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href*="/series/"]'));
+    let processed = 0;
+    for (const link of links) {
+      if (processed >= 100) break;
+      const match = link.href.match(/\/series\/([A-Z0-9]+)/i);
+      if (!match) continue;
+      const card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
     if (!card) continue;
+    if (card.dataset.crunchyBoaCard === '1') continue;
+    card.dataset.crunchyBoaCard = '1';
+    processed += 1;
     if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
     const id = match[1];
     const entry = entries.get(`crunchyroll:${id}`);
@@ -70,13 +77,23 @@ async function enhanceHomeCards(): Promise<void> {
       button.textContent = next.status === 'watch_later' ? '✓' : '+';
       button.title = next.status === 'watch_later' ? 'Remover de Assistir depois' : 'Assistir depois';
     });
-    card.appendChild(button);
+      card.appendChild(button);
+    }
+  } finally {
+    homeEnhancementRunning = false;
   }
-  homeEnhancementRunning = false;
   if (homeEnhancementQueued) {
     homeEnhancementQueued = false;
     window.setTimeout(() => { void enhanceHomeCards(); }, 250);
   }
+}
+
+function scheduleHomeEnhancement(): void {
+  window.clearTimeout(homeEnhancementTimer);
+  homeEnhancementTimer = window.setTimeout(() => {
+    homeEnhancementTimer = 0;
+    void enhanceHomeCards();
+  }, 700);
 }
 
 async function enableHomeSectionOrder(): Promise<void> {
@@ -378,10 +395,8 @@ async function detectAndInitialize(): Promise<void> {
       document.documentElement.classList.add('crunchyboa-home-page');
       await enhanceHomeCards();
       await enableHomeSectionOrder();
-      let homeObserverTimer = 0;
       const homeObserver = new MutationObserver(() => {
-        window.clearTimeout(homeObserverTimer);
-        homeObserverTimer = window.setTimeout(() => { void enhanceHomeCards(); }, 400);
+        scheduleHomeEnhancement();
       });
       homeObserver.observe(document.body, { childList: true, subtree: true });
       initialized = true;
