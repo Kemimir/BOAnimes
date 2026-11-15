@@ -1,0 +1,13 @@
+{
+  "name": "crunchyboa",
+  "version": "1.0.0",
+  "description": "CrunchyBoa - Melhora a interface da Crunchyroll e adiciona rastreamento de séries",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
+}

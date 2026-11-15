@@ -1,0 +1,263 @@
+/* CrunchyBoa - Visual Improvements for Crunchyroll & Other Anime Sites */
+
+/* ===== CRUNCHYROLL SPECIFIC ===== */
+@-moz-document domain("crunchyroll.com") {
+  /* Remove premium upsells */
+  .erc-watch-premium-upsell,
+  .erc-modal-portal,
+  .freetrial-note,
+  .showmedia-trailer-notice,
+  #showmedia_free_trial_signup,
+  .premium-upsell,
+  [data-testid="premium-upsell"] {
+    display: none !important;
+  }
+  
+  /* Clean up watch page */
+  .video-player-wrapper {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+  }
+  
+  /* Better episode list */
+  .season-episodes,
+  .episodes-list {
+    gap: 8px !important;
+  }
+  
+  .episode-item {
+    border-radius: 8px !important;
+    transition: all 0.2s !important;
+  }
+  
+  .episode-item:hover {
+    background: rgba(255,107,53,0.1) !important;
+    border-color: #ff6b35 !important;
+  }
+  
+  /* Hide ads */
+  .ad-banner,
+  [id*="ad-"],
+  [class*="advertisement"],
+  .sponsor-message {
+    display: none !important;
+  }
+  
+  /* Better scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #1a1a1a; }
+  ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #ff6b35; }
+}
+
+/* ===== GENERIC ANIME SITES ===== */
+@-moz-document domain("animesorion.com"), domain("animesonlinecc.to"), domain("animefire.plus"), domain("otakuflix.com"), domain("animesonehd.com") {
+  /* Remove common annoyances */
+  .ads, .advertisement, .pub, .banner-ad, [id^="ad"], [class*="adsense"],
+  .popup-overlay, .cookie-banner, .push-notification {
+    display: none !important;
+  }
+  
+  /* Better video player container */
+  .video-player, .player-container, #player, .jwplayer {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+  }
+  
+  /* Episode lists */
+  .episodios li, .episode-list li, .eps-list li {
+    border-radius: 8px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s !important;
+  }
+  
+  .episodios li:hover, .episode-list li:hover, .eps-list li:hover {
+    background: rgba(255,107,53,0.1) !important;
+  }
+  
+  /* Clean up sidebar */
+  .sidebar .widget:not(:first-child) { display: none !important; }
+  
+  /* Better typography */
+  .anime-title, .entry-title, h1 { letter-spacing: -0.02em !important; }
+}
+
+/* ===== CRUNCHYBOA WIDGET STYLES ===== */
+.crunchyboa-status-widget {
+  align-items: center !important;
+  max-width: 760px !important;
+  box-sizing: border-box !important;
+  animation: crunchyboa-slide-in 0.3s ease-out;
+}
+
+.crunchyboa-widget-label {
+  letter-spacing: -0.01em;
+}
+
+.crunchyboa-header-widget {
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 16px 0 auto !important;
+  padding: 6px 8px !important;
+  gap: 5px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: rgba(0, 0, 0, .28) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.crunchyboa-player-widget {
+  width: min(100%, 960px) !important;
+  margin: 10px auto 20px !important;
+  order: 2;
+}
+
+.crunchyboa-header-widget .crunchyboa-widget-label {
+  font-size: 12px !important;
+  margin-right: 2px !important;
+}
+
+.crunchyboa-header-widget .crunchyboa-status-button {
+  flex-basis: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-width: 1px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+.crunchyboa-header-widget .crunchyboa-progress {
+  display: none !important;
+}
+
+.crunchyboa-status-button {
+  flex: 0 0 40px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+.crunchyboa-progress {
+  box-sizing: border-box !important;
+}
+
+.crunchyboa-progress-track {
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.crunchyboa-progress-track > div {
+  height: 100%;
+  background: linear-gradient(90deg, #f47521, #ffb347);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 8px rgba(244,117,33,.5);
+}
+
+@media (max-width: 600px) {
+  .crunchyboa-status-widget {
+    margin: 12px 0 !important;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+  }
+
+  .crunchyboa-widget-label {
+    width: 100%;
+    margin: 0 0 2px !important;
+  }
+
+  .crunchyboa-header-widget {
+    margin-right: 8px !important;
+    padding: 4px !important;
+  }
+
+  .crunchyboa-header-widget .crunchyboa-widget-label {
+    display: none;
+  }
+}
+
+@keyframes crunchyboa-slide-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.crunchyboa-status-widget button:focus-visible {
+  outline: 2px solid #ff6b35;
+  outline-offset: 2px;
+}
+
+/* Badge indicators on series cards */
+.crunchyboa-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.crunchyboa-badge.favorite { background: #ffd700; color: #1a1a1a; }
+.crunchyboa-badge.watched { background: #4caf50; color: #fff; }
+.crunchyboa-badge.watching { background: #2196f3; color: #fff; }
+.crunchyboa-badge.plan_to_watch { background: #ff9800; color: #fff; }
+
+/* Episode watched indicator */
+.crunchyboa-ep-watched {
+  position: relative;
+}
+.crunchyboa-ep-watched::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background: #4caf50;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Progress ring for episodes */
+.crunchyboa-progress-ring {
+  transform: rotate(-90deg);
+}
+.crunchyboa-progress-ring circle:last-child {
+  stroke: url(#crunchyboa-gradient);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .crunchyboa-status-widget {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .crunchyboa-status-widget,
+  .episode-item,
+  .anime-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}
