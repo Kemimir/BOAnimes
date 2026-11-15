@@ -355,6 +355,7 @@ async function detectAndInitialize(): Promise<void> {
       await enableHomeSectionOrder();
       const homeObserver = new MutationObserver(() => { void enhanceHomeCards(); });
       homeObserver.observe(document.body, { childList: true, subtree: true });
+      initialized = true;
       return;
     }
     document.documentElement.classList.add(/\/watch\//i.test(window.location.pathname) ? 'crunchyboa-watch-page' : 'crunchyboa-series-page');
