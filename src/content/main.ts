@@ -515,6 +515,21 @@ function handleVisibilityChange(): void {
 
 document.addEventListener('visibilitychange', handleVisibilityChange);
 
+document.addEventListener('keydown', event => {
+  if (!event.ctrlKey || !event.shiftKey || !currentEntry) return;
+  const key = event.key.toLowerCase();
+  if (key === 'f' && /\/series\//i.test(window.location.pathname)) {
+    event.preventDefault();
+    void updateStatus('favorite');
+  } else if (key === 'l' && /\/series\//i.test(window.location.pathname)) {
+    event.preventDefault();
+    void updateStatus('watch_later');
+  } else if (key === 'w') {
+    event.preventDefault();
+    void updateStatus('watched');
+  }
+});
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initStorageAndDetect);
 } else {
