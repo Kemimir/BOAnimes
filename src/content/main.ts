@@ -37,7 +37,9 @@ async function enhanceHomeCards(): Promise<void> {
       if (processed >= 100) break;
       const match = link.href.match(/\/series\/([A-Z0-9]+)/i);
       if (!match) continue;
-      const card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
+      let card = link.closest('article, li, [class*="card"], [class*="tile"]') as HTMLElement | null;
+      if (card?.matches('a')) card = card.parentElement;
+      if (!card) card = link.parentElement;
     if (!card) continue;
     if (card.dataset.crunchyBoaCard === '1') continue;
     card.dataset.crunchyBoaCard = '1';
