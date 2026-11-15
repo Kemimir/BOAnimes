@@ -30,6 +30,18 @@ async function init(): Promise<void> {
   setupToggles();
   setupExportImport();
   renderAll();
+  checkForUpdate();
+}
+
+function checkForUpdate(): void {
+  chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' }, (result) => {
+    if (chrome.runtime.lastError || !result?.available) return;
+    const notice = document.getElementById('updateNotice');
+    const text = document.getElementById('updateText');
+    if (!notice || !text) return;
+    text.textContent = `Atualização disponível: v${result.latest}`;
+    notice.hidden = false;
+  });
 }
 
 function setupTabs(): void {

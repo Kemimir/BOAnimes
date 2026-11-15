@@ -24,6 +24,7 @@
     "contextMenus"
   ],
   "host_permissions": [
+    "https://raw.githubusercontent.com/Kemimir/CrunchyBoa/main/*",
     "*://*.crunchyroll.com/*",
     "*://*.animesorion.com/*",
     "*://*.animesonlinecc.to/*",
