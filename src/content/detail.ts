@@ -51,7 +51,13 @@ export function closeDetail(): void {
 }
 
 function onOutside(event: MouseEvent): void {
-  if (popup && !event.composedPath().includes(popup)) closeDetail();
+  if (!popup || event.composedPath().includes(popup)) return;
+  // Clicar na setinha com o card aberto fecha: sem isto o clique fecharia e a própria setinha reabriria.
+  if ((event.target as Element | null)?.closest?.('.boa-detail-btn')) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  closeDetail();
 }
 
 function onKey(event: KeyboardEvent): void {

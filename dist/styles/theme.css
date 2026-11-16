@@ -336,6 +336,13 @@ html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-car
   opacity: 1;
 }
 
+/* No hover o site esmaece o bloco com os idiomas (Leg | Dub) para mostrar o painel dele, que a
+   grade esconde: mantém os idiomas sempre à vista. */
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] [class*="browse-card__footer"] > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* Em telas de toque não existe hover: os botões ficam sempre visíveis. */
 @media (hover: none) {
   html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] [class*="browse-card-hover__footer"] {
