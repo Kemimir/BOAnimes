@@ -254,14 +254,13 @@ html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-car
   width: auto !important;
   height: 100% !important;
   padding: 10px;
-  border: 1px solid var(--boa-line);
+  border: 1px solid rgba(255, 255, 255, .07);
   border-radius: 12px;
-  background: var(--boa-srf);
+  background: transparent;
 }
 
 html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"]:hover {
-  border-color: rgba(255, 100, 10, .45);
-  background: var(--boa-srf2);
+  border-color: rgba(255, 100, 10, .5);
 }
 
 /* marcador vazio que o site coloca antes da arte */
@@ -272,9 +271,10 @@ html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-car
 html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > a[class*="poster-wrapper"] {
   grid-column: 1;
   grid-row: 1 / span 2;
-  align-self: start;
+  align-self: stretch;
   width: 72px !important;
-  height: 72px !important;
+  height: auto !important;
+  min-height: 72px;
   border-radius: 8px;
   overflow: hidden;
 }
