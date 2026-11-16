@@ -37,7 +37,18 @@ Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora 
 - Chave geral no popup: desligada, a Crunchyroll volta a ser como o site entrega.
 - Interface em português, inglês e espanhol.
 
-## Instalação (modo desenvolvedor)
+## Instalação
+
+### Pela Chrome Web Store
+
+A versão da loja está **em análise** pelo Google. Quando for aprovada, o botão de instalação aparecerá aqui. Pela loja, as atualizações chegam sozinhas.
+<!-- Depois da aprovação, troque o parágrafo acima por: [![Instalar na Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Instalar-ff640a)](COLE_AQUI_O_LINK_DA_LOJA) -->
+
+### Pelo zip (sem compilar)
+
+Baixe o arquivo `.zip` mais recente em [Releases](https://github.com/Kemimir/BOAnimes/releases), descompacte numa pasta que você vá manter, ative o **Modo do desenvolvedor** em `chrome://extensions` (ou `brave://extensions`) e use **Carregar sem compactação**. Nesse modo o login do AniList fica desativado, porque ele depende do ID da extensão publicada na loja; para usá-lo, instale pela loja ou cadastre seu próprio aplicativo no AniList (Ajustes → Avançado).
+
+### Compilando do código (modo desenvolvedor)
 
 Requer [Node.js](https://nodejs.org/).
 
