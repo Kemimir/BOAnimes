@@ -14,7 +14,7 @@ async function buildAll() {
   try {
     // Build content scripts as IIFE (not ESM) - they run in page context
     await build({
-      entryPoints: ['src/content/main.ts', 'src/content/early.ts', 'src/content/page.ts'],
+      entryPoints: ['src/content/main.ts', 'src/content/early.ts'],
       bundle: true,
       outdir: join(outDir, 'content'),
       format: 'iife',

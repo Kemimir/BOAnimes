@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOAnimes - By Kemir",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "Melhora a Crunchyroll e acompanha seus animes: favoritos, episódios vistos, Crunchylistas e AniList",
   "author": "Kemir",
   "icons": {
@@ -20,7 +20,13 @@
       "128": "icons/icon-128.png"
     }
   },
-  "permissions": ["storage", "activeTab", "scripting", "contextMenus", "identity"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "identity"
+  ],
   "host_permissions": [
     "https://raw.githubusercontent.com/Kemimir/BOAnimes/main/*",
     "https://graphql.anilist.co/*",
@@ -28,20 +34,25 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.crunchyroll.com/*"],
-      "js": ["content/early.js"],
-      "css": ["styles/theme.css", "styles/crunchyroll.css"],
+      "matches": [
+        "*://*.crunchyroll.com/*"
+      ],
+      "js": [
+        "content/early.js"
+      ],
+      "css": [
+        "styles/theme.css",
+        "styles/crunchyroll.css"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["*://*.crunchyroll.com/*"],
-      "js": ["content/page.js"],
-      "run_at": "document_start",
-      "world": "MAIN"
-    },
-    {
-      "matches": ["*://*.crunchyroll.com/*"],
-      "js": ["content/main.js"],
+      "matches": [
+        "*://*.crunchyroll.com/*"
+      ],
+      "js": [
+        "content/main.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -51,8 +62,12 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
-      "matches": ["*://*.crunchyroll.com/*"]
+      "resources": [
+        "icons/*"
+      ],
+      "matches": [
+        "*://*.crunchyroll.com/*"
+      ]
     }
   ]
 }
