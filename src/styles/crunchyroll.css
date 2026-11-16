@@ -620,9 +620,12 @@ html.boa-theme-off .boa-player-wrap {
   display: none;
 }
 
-.boa-player-btn {
-  font-size: 20px;
-  line-height: 1;
+.boa-player-btn svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  pointer-events: none;
 }
 
 /* Progresso da série no pé do pôster */
