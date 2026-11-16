@@ -338,7 +338,7 @@
 }
 
 /* ----- Setas laterais das fileiras em grade (no lugar das barras de rolagem) ----- */
-[data-boa-grid] {
+[data-boa-arrows] {
   position: relative;
 }
 
@@ -348,39 +348,39 @@
   z-index: 4;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, .14);
+  border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 50%;
-  background: rgba(0, 0, 0, .88);
+  background: rgba(0, 0, 0, .92);
   color: #fff;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-50%);
-  transition: opacity .15s, background-color .15s;
+  transition: opacity .15s, background-color .15s, color .15s;
 }
 
-.boa-row-prev { left: 6px; }
-.boa-row-next { right: 6px; }
+.boa-row-prev { left: 12px; }
+.boa-row-next { right: 12px; }
 .boa-row-prev svg { transform: scaleX(-1); }
 
 .boa-row-arrow svg {
   display: block;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   fill: currentColor;
   pointer-events: none;
 }
 
-[data-boa-grid]:hover .boa-row-arrow {
+[data-boa-arrows]:hover .boa-row-arrow {
   opacity: 1;
   pointer-events: auto;
 }
 
-[data-boa-grid][data-boa-start="1"] .boa-row-prev,
-[data-boa-grid][data-boa-end="1"] .boa-row-next {
+[data-boa-arrows][data-boa-start="1"] .boa-row-prev,
+[data-boa-arrows][data-boa-end="1"] .boa-row-next {
   opacity: 0 !important;
   pointer-events: none !important;
 }

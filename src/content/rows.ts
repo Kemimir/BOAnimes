@@ -17,19 +17,23 @@ function makeArrow(direction: 'prev' | 'next'): HTMLButtonElement {
 
 /** Cria as setas de uma fileira (uma vez) e as mantém em dia com a posição de rolagem. */
 export function ensureRowArrows(frame: Element): void {
-  if (frame.querySelector(':scope > .boa-row-arrow')) return;
   const scroller = frame.querySelector<HTMLElement>('[class*="carousel-scroller__wrapper"]');
   if (!scroller) return;
+  // A rolagem ocupa a largura inteira da tela, mas a faixa de conteúdo (`frame`) começa
+  // mais para dentro: as setas ficam no contêiner da rolagem, para encostar nas bordas.
+  const host = scroller.parentElement ?? frame;
+  if (host.querySelector(':scope > .boa-row-arrow')) return;
+  host.setAttribute('data-boa-arrows', '1');
 
   const previous = makeArrow('prev');
   const next = makeArrow('next');
-  frame.append(previous, next);
+  host.append(previous, next);
 
   const update = () => {
     const atStart = scroller.scrollLeft <= 2;
     const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 2;
-    frame.setAttribute('data-boa-start', atStart ? '1' : '0');
-    frame.setAttribute('data-boa-end', atEnd ? '1' : '0');
+    host.setAttribute('data-boa-start', atStart ? '1' : '0');
+    host.setAttribute('data-boa-end', atEnd ? '1' : '0');
   };
   let frameRequest = 0;
   scroller.addEventListener('scroll', () => {
@@ -40,7 +44,7 @@ export function ensureRowArrows(frame: Element): void {
     });
   }, { passive: true });
   // O estado também é conferido quando o mouse entra: cobre mudanças de largura e de conteúdo.
-  frame.addEventListener('pointerenter', update, { passive: true });
+  host.addEventListener('pointerenter', update, { passive: true });
 
   const go = (direction: number) => scroller.scrollBy({
     left: direction * Math.max(240, scroller.clientWidth * 0.85),

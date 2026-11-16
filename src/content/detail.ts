@@ -24,6 +24,20 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, 
   return node;
 }
 
+/**
+ * O site põe duas imagens na capa: uma prévia minúscula e borrada (`blur=50` na URL) e
+ * a nítida. Usa a nítida; se ela ainda não existe, tira o `blur` da URL da prévia.
+ */
+function sharpCover(card: Element): string | undefined {
+  const urls = Array.from(card.querySelectorAll<HTMLImageElement>('a[class*="poster-wrapper"] img'))
+    .map(image => image.currentSrc || image.src)
+    .filter(Boolean);
+  const sharp = urls.find(url => !/blur=\d+/.test(url));
+  if (sharp) return sharp;
+  const blurred = urls[0];
+  return blurred?.replace(/(%2C|,)blur=\d+/, '').replace(/blur=\d+(%2C|,)/, '');
+}
+
 export function closeDetail(): void {
   if (!popup) return;
   popup.remove();
@@ -56,12 +70,15 @@ export function openDetail(card: Element, hooks: DetailHooks): void {
   if (!link || !seriesId) return;
 
   const title = clean(card.querySelector('[data-t="title"], h3')?.textContent);
-  const rating = clean(card.querySelector('[data-t="rating-section"]')?.textContent);
+  // A nota é montada pelas partes: o texto bruto traz o rótulo oculto "Avaliação" colado nos números.
+  const ratingNode = card.querySelector('[data-t="rating-section"]');
+  const score = clean(ratingNode?.querySelector('p')?.textContent);
+  const votes = clean(ratingNode?.querySelector('[data-t="rating-count"]')?.textContent);
+  const rating = score ? `★ ${score}${votes ? ` ${votes}` : ''}` : '';
   const meta = Array.from(card.querySelectorAll('[data-t="meta-info"] span')).map(node => clean(node.textContent)).filter(Boolean).join(' · ');
   const tags = clean(card.querySelector('[data-t="meta-tags"]')?.textContent);
   const description = clean(card.querySelector('[data-t="description"]')?.textContent);
-  const image = card.querySelector<HTMLImageElement>('a[class*="poster-wrapper"] img');
-  const cover = image?.currentSrc || image?.src;
+  const cover = sharpCover(card);
 
   const box = make('div', 'boa-detail');
   box.setAttribute('role', 'dialog');
