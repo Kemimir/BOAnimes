@@ -70,6 +70,8 @@ export interface Settings {
   compactGrid: boolean;
   /** Player da página do episódio o mais largo que couber. */
   widePlayer: boolean;
+  /** Libera as imagens das fileiras que saíram da tela (menos memória na rolagem). */
+  liteMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -79,5 +81,6 @@ export const DEFAULT_SETTINGS: Settings = {
   syncCrunchylists: true,
   anilistClientId: '',
   compactGrid: true,
-  widePlayer: false
+  widePlayer: false,
+  liteMode: true
 };

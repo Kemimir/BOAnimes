@@ -1,6 +1,7 @@
 import { storage } from '../shared/storage';
 import { AnimeEntry, AnimeStatus, EpisodeFav, NextEpisode } from '../shared/types';
 import { closeDetail, DetailHooks, openDetail } from './detail';
+import { runLite } from './lite';
 import { ensureRowArrows } from './rows';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
@@ -987,6 +988,7 @@ function tick(): void {
   if (!document.hidden) {
     sync();
     backlog = decorateIn(document);
+    runLite(storage.peekSettings().liteMode);
   }
   const busy = backlog || performance.now() < busyUntil;
   tickTimer = window.setTimeout(tick, busy ? TICK_BUSY_MS : TICK_IDLE_MS);
