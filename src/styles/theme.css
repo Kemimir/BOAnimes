@@ -339,3 +339,9 @@ html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-car
 html:not(.boa-theme-off).boa-wide-player .video-player-wrapper {
   height: min(56.25vw, calc(100vh - 60px)) !important;
 }
+
+/* Chave de diagnóstico (localStorage.boanimes_debug = nocv): desliga só o content-visibility. */
+html.boa-nocv [data-boa-grid] [data-t="carousel-card-wrapper"] {
+  content-visibility: visible !important;
+  contain-intrinsic-size: none !important;
+}

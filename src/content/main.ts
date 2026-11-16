@@ -8,7 +8,8 @@ import * as crunchyroll from './crunchyroll-page';
  */
 
 async function start(): Promise<void> {
-  if (document.documentElement.dataset.boaOff === '1') return; // pausada pela chave de diagnóstico
+  const flags = document.documentElement.dataset;
+  if (flags.boaOff === '1' || flags.boaNoJs === '1') return; // pausada pela chave de diagnóstico
   await storage.init();
   crunchyroll.initCrunchyroll();
 }
