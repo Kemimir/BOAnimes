@@ -520,11 +520,35 @@ function cardInfo(card: Element): { id: string; title: string; coverUrl?: string
   };
 }
 
+/** Barrinha fina no pé do pôster com a fração de episódios já assistidos (some se não houver dado). */
+function paintProgressBar(poster: HTMLElement, entry: AnimeEntry | null): void {
+  const total = entry?.totalEpisodes || 0;
+  const watched = entry?.episodesWatched || 0;
+  let bar = poster.querySelector<HTMLElement>(':scope > .boa-prog');
+  if (!entry || total <= 0 || watched <= 0) {
+    bar?.remove();
+    return;
+  }
+  const percent = String(Math.min(100, Math.round((watched / total) * 100)));
+  if (!bar) {
+    bar = element('span', 'boa-prog');
+    bar.appendChild(element('i', ''));
+    poster.appendChild(bar);
+  }
+  const fill = bar.firstElementChild as HTMLElement;
+  if (fill.dataset.p !== percent) {
+    fill.dataset.p = percent;
+    fill.style.width = `${percent}%`;
+    bar.title = `${watched}/${total} episódios`;
+  }
+}
+
 function paintBadge(card: Element): void {
   const poster = card.querySelector<HTMLElement>(':scope > a[class*="poster-wrapper"]');
   if (!poster) return;
   const entry = storage.peekSettings().showBadges ? storage.peek(key(seriesIdFrom(poster.getAttribute('href')) || '')) : null;
   const status: AnimeStatus | null = !entry ? null : entry.favorite ? 'favorite' : entry.status;
+  paintProgressBar(poster, entry);
   let badge = poster.querySelector<HTMLElement>(':scope > .boa-badge');
   if (!status) {
     badge?.remove();
@@ -987,16 +1011,43 @@ let tickTimer = 0;
 let busyUntil = 0;
 let backlog = false;
 
+let reported = false;
+
+function guarded(job: () => void): void {
+  try {
+    job();
+  } catch (error) {
+    if (!reported) {
+      reported = true;
+      console.warn('[BOAnimes] uma parte da extensão falhou e foi ignorada:', error);
+    }
+  }
+}
+
+/**
+ * Se a Crunchyroll mudar a página, partes da extensão podem parar de aparecer. Depois de alguns
+ * segundos, confere se o básico está lá e, se não estiver, avisa uma única vez em vez de falhar calada.
+ */
+let healthDone = false;
+
+function checkHealth(): void {
+  if (healthDone || performance.now() < 20000) return;
+  const missing =
+    (page.kind === 'watch' && document.querySelector('.erc-current-media-info') && !document.querySelector('.boa-actions')) ||
+    (document.querySelector('.dynamic-feed-wrapper [data-t^="series-card"]') && !document.querySelector('[data-boa]'));
+  if (!document.querySelector('.boa-quick-btn,[class*="boa-quick"]') && !missing) return;
+  healthDone = true;
+  if (missing) showToast('A Crunchyroll mudou parte da página: alguns recursos do BOAnimes podem não aparecer.');
+}
+
 function tick(): void {
   tickTimer = 0;
   if (!document.hidden) {
-    sync();
-    backlog = decorateIn(document);
-    try {
-      runLite(storage.peekSettings().liteMode);
-    } catch {
-      // O modo leve é opcional: um erro nele não pode parar o ciclo da extensão.
-    }
+    // Cada parte roda isolada: um erro em uma não pode parar o ciclo nem as outras.
+    guarded(sync);
+    guarded(() => { backlog = decorateIn(document); });
+    guarded(() => runLite(storage.peekSettings().liteMode));
+    guarded(checkHealth);
   }
   const busy = backlog || performance.now() < busyUntil;
   tickTimer = window.setTimeout(tick, busy ? TICK_BUSY_MS : TICK_IDLE_MS);

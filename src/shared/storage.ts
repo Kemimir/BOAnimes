@@ -204,7 +204,17 @@ class StorageManager {
       count += 1;
     }
     for (const fav of Array.isArray(data.episodes) ? data.episodes : []) this.episodes.set(fav.id, fav);
-    if (data.settings) this.settings = { ...this.settings, ...data.settings, anilistClientId: this.settings.anilistClientId };
+    if (data.settings) {
+      const merged = { ...this.settings, ...data.settings, anilistClientId: this.settings.anilistClientId };
+      // Um arquivo editado à mão não pode colocar valores fora do que os controles permitem.
+      const clamp = (value: unknown, min: number, max: number, fallback: number): number =>
+        typeof value === 'number' && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+      merged.playerSharp = clamp(merged.playerSharp, 0, 100, 0);
+      merged.playerGain = clamp(merged.playerGain, 100, 300, 100);
+      merged.playerNight = clamp(merged.playerNight, 0, 100, 0);
+      merged.autoSkipDelay = clamp(merged.autoSkipDelay, 0, 10, 3);
+      this.settings = merged;
+    }
     await this.flush();
     return count;
   }

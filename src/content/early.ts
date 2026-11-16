@@ -30,7 +30,7 @@ const apply = (settings?: Flags) => {
 };
 
 // Lê também a chave antiga, para quem ainda não abriu a extensão depois da atualização.
-chrome.storage.local.get([SETTINGS_KEY, 'crunchyboa_settings']).then(data => apply(data[SETTINGS_KEY] ?? data.crunchyboa_settings));
+chrome.storage.local.get([SETTINGS_KEY, 'crunchyboa_settings']).then(data => apply((data[SETTINGS_KEY] ?? data.crunchyboa_settings) as Flags | undefined));
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes[SETTINGS_KEY]) apply(changes[SETTINGS_KEY].newValue);
+  if (area === 'local' && changes[SETTINGS_KEY]) apply(changes[SETTINGS_KEY].newValue as Flags | undefined);
 });

@@ -91,13 +91,13 @@
       perXhr.set(this, replacement);
       return originalAdd.call(this, type, replacement, options);
     }
-    return originalAdd.call(this, type, listener, options);
+    return originalAdd.call(this, type, listener as EventListenerOrEventListenerObject, options);
   };
 
   const originalRemove = XMLHttpRequest.prototype.removeEventListener;
   XMLHttpRequest.prototype.removeEventListener = function (this: XMLHttpRequest, type: string, listener: EventListenerOrEventListenerObject | null, options?: boolean | EventListenerOptions): void {
     const replacement = listener && typeof listener === 'function' ? wrappedListeners.get(listener)?.get(this) : undefined;
-    return originalRemove.call(this, type, replacement || listener, options);
+    return originalRemove.call(this, type, (replacement || listener) as EventListenerOrEventListenerObject, options);
   };
 
   // Handlers atribuídos por propriedade (onload, onloadend, onreadystatechange).

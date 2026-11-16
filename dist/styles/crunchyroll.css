@@ -624,3 +624,20 @@ html.boa-theme-off .boa-player-wrap {
   font-size: 20px;
   line-height: 1;
 }
+
+/* Progresso da série no pé do pôster */
+.boa-prog {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, .18);
+  pointer-events: none;
+}
+
+.boa-prog > i {
+  display: block;
+  height: 100%;
+  background: #ff640a;
+}
