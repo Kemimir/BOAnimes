@@ -47,11 +47,33 @@ html:not(.boa-theme-off) .erc-large-header .header-logo {
 }
 
 html:not(.boa-theme-off) .erc-large-header .erc-header-tile {
-  border: 1px solid rgba(255, 255, 255, .2);
+  border: 1px solid rgba(255, 255, 255, .34);
   border-radius: 999px;
-  background-color: rgba(0, 0, 0, .6);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  background-color: rgba(0, 0, 0, .74);
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9);
   transition: border-color .15s, color .15s;
+}
+
+/* Ícones do cabeçalho mais nítidos e um pouco maiores, brancos sobre o fundo escuro do botão. */
+html:not(.boa-theme-off) .erc-large-header .erc-header-tile:not(.boa-quick-btn) svg {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  fill: currentColor;
+  opacity: 1;
+}
+
+/* Degradê escuro bem leve atrás da faixa do topo: dá contraste aos textos e ícones sobre
+   imagens claras sem voltar a ter uma barra. Estático, sem filtro nem desfoque. */
+html:not(.boa-theme-off) .erc-large-header .header-content::before {
+  content: '';
+  position: absolute;
+  inset: -4px -14px -34px;
+  z-index: -1;
+  background: linear-gradient(rgba(0, 0, 0, .62), rgba(0, 0, 0, 0));
+  pointer-events: none;
 }
 
 html:not(.boa-theme-off) .erc-large-header .header-nav .erc-header-tile {
@@ -64,8 +86,8 @@ html:not(.boa-theme-off) .erc-large-header .header-actions .erc-header-tile {
 
 html:not(.boa-theme-off) .erc-large-header .erc-header-tile:hover,
 html:not(.boa-theme-off) .erc-large-header .erc-header-tile.state-active {
-  border-color: rgba(255, 100, 10, .75);
-  background-color: rgba(0, 0, 0, .6);
+  border-color: rgba(255, 100, 10, .85);
+  background-color: rgba(0, 0, 0, .74);
   color: #fff;
 }
 
