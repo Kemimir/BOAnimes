@@ -1,7 +1,7 @@
 import { storage, AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/storage';
 import { Settings } from '../shared/types';
 import {
-  AniMedia, connect, disconnect, displayTitle, getAuth, parseTitle, redirectUrl, savePlanning, saveProgress, searchAnime
+  AniMedia, clientId, connect, disconnect, displayTitle, getAuth, parseTitle, redirectUrl, savePlanning, saveProgress, searchAnime
 } from '../shared/anilist';
 import { PageProbe, probePage } from './detect';
 
@@ -383,10 +383,13 @@ function paintToggle(toggle: HTMLElement): void {
 
 async function renderAniList(): Promise<void> {
   const auth = await getAuth();
-  $('anilistStatus').textContent = auth ? `Conectado como ${auth.viewer.name}.` : 'Não conectado. Sem conta, só a busca funciona.';
+  const configured = Boolean(clientId(settings.anilistClientId));
+  $('anilistStatus').textContent = auth
+    ? `Conectado como ${auth.viewer.name}.`
+    : configured ? 'Não conectado.' : 'Login do AniList ainda não configurado.';
   $('anilistConnect').hidden = Boolean(auth);
   $('anilistDisconnect').hidden = !auth;
-  ($('anilistClient') as HTMLInputElement).hidden = Boolean(auth);
+  ($('anilistConnect') as HTMLButtonElement).disabled = Boolean(auth) || !configured;
 }
 
 function setupSettings(): void {
@@ -422,7 +425,10 @@ function setupSettings(): void {
 
   const client = $('anilistClient') as HTMLInputElement;
   client.value = settings.anilistClientId;
-  client.addEventListener('change', () => void storage.updateSettings({ anilistClientId: client.value.trim() }));
+  client.addEventListener('change', async () => {
+    settings = await storage.updateSettings({ anilistClientId: client.value.trim() });
+    await renderAniList();
+  });
   ($('anilistRedirect') as HTMLInputElement).value = redirectUrl();
   $('anilistCopy').addEventListener('click', () => {
     void navigator.clipboard.writeText(redirectUrl());
@@ -430,12 +436,9 @@ function setupSettings(): void {
     window.setTimeout(() => { $('anilistCopy').textContent = 'Copiar'; }, 1500);
   });
   $('anilistConnect').addEventListener('click', async () => {
-    const id = client.value.trim();
-    if (!id) { $('anilistStatus').textContent = 'Cole o Client ID do seu app AniList primeiro.'; return; }
-    await storage.updateSettings({ anilistClientId: id });
     $('anilistStatus').textContent = 'Abrindo o login do AniList…';
     try {
-      await connect(id);
+      await connect(settings.anilistClientId);
     } catch (error) {
       $('anilistStatus').textContent = `Não consegui conectar: ${(error as Error).message}`;
       return;

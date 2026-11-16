@@ -25,6 +25,10 @@ a:hover { text-decoration: underline; }
 h1, h2, h3 { font-weight: 700; }
 .muted { color: var(--txt2); font-size: 12px; }
 .small { font-size: 11px; margin-top: 8px; }
+.advanced { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.advanced summary { color: var(--txt2); cursor: pointer; font-size: 12px; font-weight: 600; }
+.advanced[open] summary { color: var(--txt); margin-bottom: 8px; }
+.advanced input { display: block; width: 100%; margin-top: 4px; }
 [hidden] { display: none !important; }
 
 /* ----- topo ----- */

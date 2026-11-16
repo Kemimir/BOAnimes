@@ -80,15 +80,20 @@
       <h3>AniList</h3>
       <p class="muted" id="anilistStatus">Não conectado.</p>
       <div class="row slim">
-        <input id="anilistClient" type="text" placeholder="Client ID do AniList" aria-label="Client ID do AniList" autocomplete="off" spellcheck="false">
-        <button id="anilistConnect" class="btn primary" type="button">Conectar</button>
+        <button id="anilistConnect" class="btn primary" type="button">Conectar com AniList</button>
         <button id="anilistDisconnect" class="btn secondary" type="button" hidden>Sair</button>
       </div>
-      <p class="muted small">Crie um app em <a href="https://anilist.co/settings/developer" target="_blank" rel="noopener">anilist.co/settings/developer</a> com esta URL de redirecionamento:</p>
-      <div class="row slim">
-        <input id="anilistRedirect" type="text" readonly aria-label="URL de redirecionamento">
-        <button id="anilistCopy" class="btn secondary" type="button">Copiar</button>
-      </div>
+      <p class="muted small">BOAnimes só lê e atualiza sua lista de animes no AniList. O token fica neste navegador; Sair apaga.</p>
+      <details class="advanced">
+        <summary>Avançado</summary>
+        <label class="muted small" for="anilistClient">Client ID próprio (opcional)</label>
+        <input id="anilistClient" type="text" placeholder="Client ID do AniList" aria-label="Client ID do AniList" autocomplete="off" spellcheck="false">
+        <label class="muted small" for="anilistRedirect">URL de redirecionamento</label>
+        <div class="row slim">
+          <input id="anilistRedirect" type="text" readonly aria-label="URL de redirecionamento">
+          <button id="anilistCopy" class="btn secondary" type="button">Copiar</button>
+        </div>
+      </details>
     </div>
   </section>
 

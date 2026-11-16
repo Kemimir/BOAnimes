@@ -4,6 +4,7 @@ import { join, resolve } from 'path';
 
 const isWatch = process.argv.includes('--watch');
 const outDir = resolve('dist');
+const anilistClientId = process.env.BOANIMES_ANILIST_CLIENT_ID || '';
 
 if (!existsSync(outDir)) {
   mkdirSync(outDir, { recursive: true });
@@ -35,7 +36,8 @@ async function buildAll() {
       platform: 'browser',
       minify: !isWatch,
       sourcemap: isWatch,
-      external: ['chrome']
+      external: ['chrome'],
+      define: { BOANIMES_ANILIST_CLIENT_ID: JSON.stringify(anilistClientId) }
     });
     
     // Build background

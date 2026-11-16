@@ -9,6 +9,14 @@ const CACHE_KEY = 'boanimes_anilist_cache';
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const CACHE_MAX = 80;
 
+declare const BOANIMES_ANILIST_CLIENT_ID: string;
+/** Client ID público opcional, injetado pelo build para uma distribuição/fork. */
+export const DEFAULT_CLIENT_ID = BOANIMES_ANILIST_CLIENT_ID;
+
+export function clientId(override = ''): string {
+  return override.trim() || DEFAULT_CLIENT_ID.trim();
+}
+
 export interface AniMedia {
   id: number;
   idMal: number | null;
@@ -82,8 +90,10 @@ export function redirectUrl(): string {
 }
 
 /** Login pelo fluxo OAuth (implicit grant) do AniList, aberto numa janela do navegador. */
-export async function connect(clientId: string): Promise<AniAuth> {
-  const authorize = `https://anilist.co/api/v2/oauth/authorize?client_id=${encodeURIComponent(clientId)}&response_type=token`;
+export async function connect(override = ''): Promise<AniAuth> {
+  const id = clientId(override);
+  if (!id) throw new Error('Login do AniList ainda não configurado.');
+  const authorize = `https://anilist.co/api/v2/oauth/authorize?client_id=${encodeURIComponent(id)}&response_type=token`;
   const result = await chrome.identity.launchWebAuthFlow({ url: authorize, interactive: true });
   if (!result) throw new Error('Login cancelado.');
   const params = new URLSearchParams(new URL(result).hash.slice(1));
