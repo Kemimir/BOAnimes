@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "BOAnimes Dark – By Kemir",
+  "version": "1.0.0",
+  "description": "Tema preto com detalhes em laranja, no mesmo visual da extensão BOAnimes.",
+  "author": "Kemir",
+  "icons": { "128": "icon-128.png" },
+  "theme": {
+    "colors": {
+      "frame": [8, 8, 8],
+      "frame_inactive": [16, 16, 16],
+      "frame_incognito": [0, 0, 0],
+      "frame_incognito_inactive": [10, 10, 10],
+      "toolbar": [23, 23, 23],
+      "toolbar_text": [240, 240, 240],
+      "tab_text": [245, 245, 245],
+      "tab_background_text": [160, 160, 160],
+      "bookmark_text": [210, 210, 210],
+      "toolbar_button_icon": [255, 100, 10],
+      "omnibox_background": [10, 10, 10],
+      "omnibox_text": [240, 240, 240],
+      "button_background": [255, 255, 255, 0],
+      "ntp_background": [0, 0, 0],
+      "ntp_text": [240, 240, 240],
+      "ntp_link": [255, 100, 10],
+      "ntp_section": [14, 14, 14],
+      "ntp_section_text": [240, 240, 240],
+      "ntp_section_link": [255, 100, 10]
+    },
+    "images": {
+      "theme_ntp_background": "images/ntp.png"
+    },
+    "tints": {
+      "buttons": [0.07, 1, 0.55],
+      "frame": [0.07, 0.1, 0.03],
+      "frame_inactive": [0.07, 0.1, 0.05],
+      "background_tab": [0.07, 0.1, 0.04]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom",
+      "ntp_background_repeat": "no-repeat"
+    }
+  }
+}
