@@ -55,8 +55,13 @@ function buildFilter(settings: Settings): string {
   const night = settings.playerNight / 100;
   if (night > 0 && (!settings.playerNightAuto || isNight())) {
     // Menos azul (sépia + matiz levemente quente) e menos brilho, na intensidade escolhida.
-    parts.push(`sepia(${(night * 0.55).toFixed(2)})`, `hue-rotate(${Math.round(-12 * night)}deg)`, `brightness(${(1 - night * 0.28).toFixed(2)})`);
+    parts.push(`sepia(${(night * 0.55).toFixed(2)})`, `hue-rotate(${Math.round(-12 * night)}deg)`);
   }
+  // Brilho (junto com o escurecimento do modo noturno) e saturação escolhidos nos controles.
+  const dim = night > 0 && (!settings.playerNightAuto || isNight()) ? 1 - night * 0.28 : 1;
+  const brightness = (settings.playerBrightness / 100) * dim;
+  if (Math.abs(brightness - 1) > 0.005) parts.push(`brightness(${brightness.toFixed(2)})`);
+  if (settings.playerSaturation !== 100) parts.push(`saturate(${(settings.playerSaturation / 100).toFixed(2)})`);
   return parts.join(' ');
 }
 
@@ -110,12 +115,14 @@ export function applyPlayer(): void {
 
 /* ---------- painel ---------- */
 
-type Slider = { key: 'playerSharp' | 'playerGain' | 'playerNight'; label: string; min: number; max: number; step: number; unit: string };
+type Slider = { key: 'playerSharp' | 'playerGain' | 'playerNight' | 'playerBrightness' | 'playerSaturation'; label: string; min: number; max: number; step: number; unit: string; rest: number };
 
 const SLIDERS: Slider[] = [
-  { key: 'playerSharp', label: 'Nitidez', min: 0, max: 100, step: 5, unit: '%' },
-  { key: 'playerGain', label: 'Volume extra', min: 100, max: 300, step: 10, unit: '%' },
-  { key: 'playerNight', label: 'Modo noturno', min: 0, max: 100, step: 5, unit: '%' }
+  { key: 'playerBrightness', label: 'Brilho', min: 50, max: 150, step: 5, unit: '%', rest: 100 },
+  { key: 'playerSaturation', label: 'Saturação', min: 0, max: 200, step: 5, unit: '%', rest: 100 },
+  { key: 'playerSharp', label: 'Nitidez', min: 0, max: 100, step: 5, unit: '%', rest: 0 },
+  { key: 'playerGain', label: 'Volume extra', min: 100, max: 300, step: 10, unit: '%', rest: 100 },
+  { key: 'playerNight', label: 'Modo noturno', min: 0, max: 100, step: 5, unit: '%', rest: 0 }
 ];
 
 export function buildPlayerButton(): HTMLElement {
@@ -167,10 +174,10 @@ export function buildPlayerButton(): HTMLElement {
   reset.className = 'boa-player-reset';
   reset.textContent = t('Restaurar');
   reset.addEventListener('click', () => {
-    void storage.updateSettings({ playerSharp: 0, playerGain: 100, playerNight: 0, playerNightAuto: false }).then(() => {
+    void storage.updateSettings({ playerSharp: 0, playerGain: 100, playerNight: 0, playerBrightness: 100, playerSaturation: 100, playerNightAuto: false }).then(() => {
       applyPlayer();
       panel.querySelectorAll<HTMLInputElement>('input[type=range]').forEach((input, index) => {
-        input.value = String(index === 1 ? 100 : 0);
+        input.value = String(SLIDERS[index].rest);
         const out = input.parentElement?.querySelector('output');
         if (out) out.textContent = `${input.value}${SLIDERS[index].unit}`;
       });

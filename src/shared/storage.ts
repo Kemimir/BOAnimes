@@ -212,6 +212,8 @@ class StorageManager {
       merged.playerSharp = clamp(merged.playerSharp, 0, 100, 0);
       merged.playerGain = clamp(merged.playerGain, 100, 300, 100);
       merged.playerNight = clamp(merged.playerNight, 0, 100, 0);
+      merged.playerBrightness = clamp(merged.playerBrightness, 50, 150, 100);
+      merged.playerSaturation = clamp(merged.playerSaturation, 0, 200, 100);
       merged.autoSkipDelay = clamp(merged.autoSkipDelay, 0, 10, 3);
       this.settings = merged;
     }

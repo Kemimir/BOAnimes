@@ -73,6 +73,8 @@ add('✓ Assistida', '✓ Watched', '✓ Vista');
 add('Mais detalhes', 'More details', 'Más detalles');
 add('Ajustes do player', 'Player settings', 'Ajustes del reproductor');
 add('Ajustes do player (nitidez, volume, modo noturno)', 'Player settings (sharpness, volume, night mode)', 'Ajustes del reproductor (nitidez, volumen, modo nocturno)');
+add('Brilho', 'Brightness', 'Brillo');
+add('Saturação', 'Saturation', 'Saturación');
 add('Nitidez', 'Sharpness', 'Nitidez');
 add('Volume extra', 'Extra volume', 'Volumen extra');
 add('Modo noturno', 'Night mode', 'Modo nocturno');

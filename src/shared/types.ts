@@ -76,6 +76,9 @@ export interface Settings {
   playerSharp: number;
   playerGain: number;
   playerNight: number;
+  /** Brilho (50-150) e saturação (0-200) da imagem, em %; 100 não altera. */
+  playerBrightness: number;
+  playerSaturation: number;
   /** Modo noturno só em horário noturno. */
   playerNightAuto: boolean;
   /** Aperta sozinho o botão "Pular…" do player (abertura e resumo). */
@@ -106,6 +109,8 @@ export const DEFAULT_SETTINGS: Settings = {
   playerSharp: 0,
   playerGain: 100,
   playerNight: 0,
+  playerBrightness: 100,
+  playerSaturation: 100,
   playerNightAuto: false,
   autoSkip: true,
   autoSkipCredits: false,
