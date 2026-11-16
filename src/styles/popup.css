@@ -71,9 +71,8 @@ input:focus-visible, button:focus-visible, .toggle:focus-visible, a:focus-visibl
 .name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ----- filtros ----- */
-.chips { display: flex; gap: 4px; padding: 12px 16px 8px; overflow-x: auto; scrollbar-width: none; }
-.chips::-webkit-scrollbar { display: none; }
-.chip { flex: 0 0 auto; padding: 6px 10px; border: 0; border-radius: 999px; background: var(--srf); color: var(--txt2); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 8px; }
+.chip { flex: 0 0 auto; padding: 5px 10px; border: 0; border-radius: 999px; background: var(--srf); color: var(--txt2); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .chip:hover { color: var(--txt); }
 .chip[aria-pressed="true"] { background: var(--acc); color: #1c0f04; }
 
