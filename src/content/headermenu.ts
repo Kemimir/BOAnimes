@@ -150,6 +150,8 @@ export function mountAccountMenu(): void {
   const tile = root?.querySelector<HTMLElement>(':scope > .erc-header-tile');
   if (!root || !tile || root.dataset.boaAccount === '1') return;
   root.dataset.boaAccount = '1';
+  // Na rolagem o cabeçalho esconde tudo menos o menu da conta: esta marca diz qual item fica.
+  root.closest('.header-actions > *')?.classList.add('boa-keep');
 
   const panel = document.createElement('div');
   panel.className = 'boa-account-panel';

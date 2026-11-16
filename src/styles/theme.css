@@ -69,8 +69,7 @@ html:not(.boa-theme-off) .erc-large-header .erc-header-tile.state-active {
   color: #fff;
 }
 
-/* Logo: contorno preto de verdade (traço atrás do preenchimento) e tamanho fixo, para o
-   texto poder recolher na rolagem deixando só o ícone. */
+/* Logo: tamanho fixo, para o texto poder recolher na rolagem deixando só o ícone. */
 html:not(.boa-theme-off) .erc-large-header .header-logo a {
   display: block;
   width: 214px;
@@ -86,13 +85,6 @@ html:not(.boa-theme-off) .erc-large-header .header-logo svg {
   margin: 8px 0 8px 2px;
 }
 
-html:not(.boa-theme-off) .erc-large-header .header-logo svg path {
-  stroke: #000;
-  stroke-width: 2.4px;
-  stroke-linejoin: round;
-  paint-order: stroke fill;
-}
-
 /* Rolando para baixo: o texto do logo recolhe até sobrar só o ícone, e os botões do
    cabeçalho somem. Passando o mouse na faixa do topo (ou focando com o teclado) tudo volta.
    A marca boa-scrolled é posta pela extensão quando a página desce do topo. */
@@ -105,21 +97,30 @@ html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-wi
   width: 214px;
 }
 
-html:not(.boa-theme-off) .erc-large-header .header-nav,
-html:not(.boa-theme-off) .erc-large-header .header-actions {
+html:not(.boa-theme-off) .erc-large-header .header-nav > *,
+html:not(.boa-theme-off) .erc-large-header .header-actions > * {
   transition: opacity .2s;
 }
 
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-nav,
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-actions {
+/* Rolando: à esquerda fica só o ícone da logo; à direita só o menu da conta (marcado com
+   boa-keep pela extensão). Todo o resto some até o mouse passar na faixa do topo. */
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-nav > *,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-actions > *:not(.boa-keep) {
   opacity: 0;
 }
 
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-nav,
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-actions,
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-nav,
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-actions {
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-nav > *,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-actions > *,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-nav > *,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-actions > * {
   opacity: 1;
+}
+
+/* O botão "Lista" do cabeçalho (/watchlist) agora fica no menu da conta, que já tem
+   Fila e Crunchylistas, os mesmos destinos. */
+html:not(.boa-theme-off) .erc-large-header .erc-watchlist-header-tile,
+html:not(.boa-theme-off) .erc-large-header a[class*="erc-watchlist-head"] {
+  display: none !important;
 }
 
 /* Sem o risquinho divisor que o site põe depois de Categorias. */
