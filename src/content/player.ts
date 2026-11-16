@@ -114,7 +114,7 @@ export function buildPlayerButton(): HTMLElement {
   wrap.className = 'boa-player-wrap';
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'boa-icon-btn boa-player-btn';
+  button.className = 'boa-player-btn';
   button.title = 'Ajustes do player (nitidez, volume, modo noturno)';
   button.setAttribute('aria-label', 'Ajustes do player');
   button.textContent = '🎚';

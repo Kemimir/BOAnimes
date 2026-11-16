@@ -22,6 +22,7 @@
 }
 
 .boa-icon-btn,
+.boa-player-btn,
 .boa-card-btn {
   display: flex;
   align-items: center;
@@ -34,7 +35,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.boa-icon-btn {
+.boa-icon-btn,
+.boa-player-btn {
   width: 40px;
   height: 40px;
   padding: 8px;
@@ -50,6 +52,7 @@
 }
 
 .boa-icon-btn:hover,
+.boa-player-btn:hover,
 .boa-card-btn:hover {
   color: #ff9147;
 }
@@ -615,4 +618,9 @@ html.boa-theme-off .boa-detail-btn {
 
 html.boa-theme-off .boa-player-wrap {
   display: none;
+}
+
+.boa-player-btn {
+  font-size: 20px;
+  line-height: 1;
 }
