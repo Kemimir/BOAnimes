@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOAnimes - By Kemir",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "Melhora a Crunchyroll e acompanha seus animes: favoritos, episódios vistos, Crunchylistas e AniList",
   "author": "Kemir",
   "icons": {
@@ -45,6 +45,16 @@
         "styles/crunchyroll.css"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.crunchyroll.com/*"
+      ],
+      "js": [
+        "content/page.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
     },
     {
       "matches": [
