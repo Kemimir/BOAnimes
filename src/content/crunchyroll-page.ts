@@ -1043,11 +1043,19 @@ function checkHealth(): void {
   if (missing) showToast(t('A Crunchyroll mudou parte da página: alguns recursos do BOAnimes podem não aparecer.'));
 }
 
+/** Marca o <html> quando a página desceu do topo: o cabeçalho some até o mouse passar nele. */
+function syncScrolledFlag(): void {
+  const scrolled = window.scrollY > 80;
+  const root = document.documentElement.classList;
+  if (root.contains('boa-scrolled') !== scrolled) root.toggle('boa-scrolled', scrolled);
+}
+
 function tick(): void {
   tickTimer = 0;
   if (!document.hidden) {
     // Cada parte roda isolada: um erro em uma não pode parar o ciclo nem as outras.
     guarded(() => applyFlags(storage.peekSettings()));
+    guarded(syncScrolledFlag);
     guarded(sync);
     guarded(() => { backlog = decorateIn(document); });
     guarded(() => runLite(storage.peekSettings().liteMode));
@@ -1067,7 +1075,10 @@ export function initCrunchyroll(): void {
   tick();
   window.addEventListener('popstate', tickSoon);
   // Rolando, as fileiras novas aparecem: o ciclo acelera por um instante.
-  window.addEventListener('scroll', () => { busyUntil = performance.now() + 1500; }, { passive: true });
+  window.addEventListener('scroll', () => {
+    busyUntil = performance.now() + 1500;
+    syncScrolledFlag();
+  }, { passive: true });
   document.addEventListener('pointerover', onPointerOver, { passive: true });
   storage.subscribe(repaintAll);
   window.setTimeout(() => void importHistory(), 2500);
