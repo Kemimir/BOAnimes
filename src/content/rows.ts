@@ -24,6 +24,10 @@ export function ensureRowArrows(frame: Element): void {
   const host = scroller.parentElement ?? frame;
   if (host.querySelector(':scope > .boa-row-arrow')) return;
   host.setAttribute('data-boa-arrows', '1');
+  // Estado inicial presumido. Medir agora forçaria o layout de cada fileira recém-carregada;
+  // a posição real é lida quando o mouse entra ou a fileira rola.
+  host.setAttribute('data-boa-start', '1');
+  host.setAttribute('data-boa-end', '0');
 
   const previous = makeArrow('prev');
   const next = makeArrow('next');
@@ -46,10 +50,43 @@ export function ensureRowArrows(frame: Element): void {
   // O estado também é conferido quando o mouse entra: cobre mudanças de largura e de conteúdo.
   host.addEventListener('pointerenter', update, { passive: true });
 
-  const go = (direction: number) => scroller.scrollBy({
-    left: direction * Math.max(240, scroller.clientWidth * 0.85),
-    behavior: 'smooth'
-  });
+  // Rolagem animada própria (o "smooth" do navegador é seco e curto demais). A curva
+  // acelera e freia suave, e qualquer gesto do usuário na fileira interrompe a animação.
+  let animation = 0;
+  const stop = () => {
+    if (!animation) return;
+    cancelAnimationFrame(animation);
+    animation = 0;
+    host.removeAttribute('data-boa-gliding');
+  };
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const go = (direction: number) => {
+    stop();
+    const from = scroller.scrollLeft;
+    const max = scroller.scrollWidth - scroller.clientWidth;
+    const to = Math.max(0, Math.min(max, from + direction * Math.max(240, scroller.clientWidth * 0.85)));
+    if (Math.abs(to - from) < 1) return;
+    const duration = Math.min(760, 420 + Math.abs(to - from) * 0.12);
+    const started = performance.now();
+    // Durante a animação os cards não reagem ao mouse: evita recalcular o hover a cada quadro.
+    host.setAttribute('data-boa-gliding', '1');
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - started) / duration);
+      scroller.scrollLeft = from + (to - from) * ease(progress);
+      if (progress < 1) {
+        animation = requestAnimationFrame(step);
+      } else {
+        animation = 0;
+        host.removeAttribute('data-boa-gliding');
+        update();
+      }
+    };
+    animation = requestAnimationFrame(step);
+  };
+  for (const type of ['wheel', 'touchstart', 'pointerdown'] as const) {
+    scroller.addEventListener(type, stop, { passive: true });
+  }
+
   for (const [button, direction] of [[previous, -1], [next, 1]] as const) {
     button.addEventListener('click', event => {
       event.preventDefault();
@@ -57,5 +94,4 @@ export function ensureRowArrows(frame: Element): void {
       go(direction);
     });
   }
-  requestAnimationFrame(update);
 }

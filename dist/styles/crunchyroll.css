@@ -549,3 +549,13 @@ html.boa-grid-off .boa-detail-btn,
 html.boa-theme-off .boa-detail-btn {
   display: none !important;
 }
+
+/* Enquanto a fileira desliza pela seta, os cards não respondem ao mouse (menos recálculo
+   de hover a cada quadro) e o navegador é avisado de que a posição de rolagem vai mudar. */
+[data-boa-gliding] [data-t^="series-card"] {
+  pointer-events: none;
+}
+
+[data-boa-gliding] [class*="carousel-scroller__wrapper"] {
+  will-change: scroll-position;
+}

@@ -430,6 +430,7 @@ function cardEpisode(card: Element): EpisodeFav | null {
 
 async function toggleSetting(name: 'compactGrid' | 'widePlayer'): Promise<void> {
   await storage.updateSettings({ [name]: !storage.peekSettings()[name] });
+  syncThumbSizes();
   paintGroup();
   renderQuick();
 }
@@ -590,10 +591,48 @@ function markGridFrame(card: Element): void {
   ensureRowArrows(frame);
 }
 
+/**
+ * As miniaturas da grade têm 72px, mas o site pede ao navegador a imagem de 480px (ele calcula
+ * pelo tamanho do card original). Declarar o tamanho real faz o navegador escolher a de 240px:
+ * menos bytes, menos decodificação e muito menos memória com centenas de cards.
+ */
+let thumbsShrunk = false;
+
+const gridActive = (): boolean => {
+  const settings = storage.peekSettings();
+  return settings.compactGrid && settings.themeEnabled;
+};
+
+function shrinkThumb(card: Element): void {
+  card.querySelectorAll<HTMLImageElement>('a[class*="poster-wrapper"] img').forEach(image => {
+    if (image.dataset.boaSizes === undefined) image.dataset.boaSizes = image.sizes;
+    image.sizes = '72px';
+  });
+}
+
+/** Liga ou desliga o ajuste de tamanho em todas as miniaturas já decoradas. */
+function syncThumbSizes(): void {
+  const active = gridActive();
+  if (active === thumbsShrunk) return;
+  thumbsShrunk = active;
+  if (active) {
+    document.querySelectorAll('[data-boa-grid] [data-t^="series-card"]').forEach(shrinkThumb);
+    return;
+  }
+  document.querySelectorAll<HTMLImageElement>('img[data-boa-sizes]').forEach(image => {
+    image.sizes = image.dataset.boaSizes ?? '';
+    delete image.dataset.boaSizes;
+  });
+}
+
 function decorateCard(card: Element): void {
   if (card.hasAttribute('data-boa')) return;
   card.setAttribute('data-boa', '1');
   markGridFrame(card);
+  if (gridActive()) {
+    thumbsShrunk = true;
+    shrinkThumb(card);
+  }
   paintBadge(card);
 }
 
@@ -666,6 +705,7 @@ function repaintAll(): void {
     paintButton(button, 'episode', Boolean(storage.peekEpisode(button.dataset.episode || '')));
   });
   if (page.entry) page.entry = storage.peek(key(page.entry.id)) || page.entry;
+  syncThumbSizes();
   paintGroup();
   renderQuick();
   updateQuickBadge();
