@@ -72,6 +72,12 @@ export interface Settings {
   widePlayer: boolean;
   /** Libera as imagens das fileiras que saíram da tela (menos memória na rolagem). */
   liteMode: boolean;
+  /** Ajustes do player: nitidez 0-100, volume 100-300 (%), modo noturno 0-100. */
+  playerSharp: number;
+  playerGain: number;
+  playerNight: number;
+  /** Modo noturno só em horário noturno. */
+  playerNightAuto: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -82,5 +88,9 @@ export const DEFAULT_SETTINGS: Settings = {
   anilistClientId: '',
   compactGrid: true,
   widePlayer: false,
-  liteMode: true
+  liteMode: true,
+  playerSharp: 0,
+  playerGain: 100,
+  playerNight: 0,
+  playerNightAuto: false
 };

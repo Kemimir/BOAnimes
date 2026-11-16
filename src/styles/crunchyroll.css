@@ -559,3 +559,60 @@ html.boa-theme-off .boa-detail-btn {
 [data-boa-gliding] [class*="carousel-scroller__wrapper"] {
   will-change: scroll-position;
 }
+
+/* Ajustes do player (nitidez, volume extra, modo noturno) */
+.boa-player-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.boa-player-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 2147483000;
+  width: 260px;
+  padding: 12px 14px;
+  background: #0a0a0a;
+  border: 1px solid #262626;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .6);
+  color: #e8e8e8;
+  font: 13px/1.3 system-ui, sans-serif;
+}
+
+.boa-player-panel[hidden] {
+  display: none;
+}
+
+.boa-player-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+  margin-bottom: 10px;
+}
+
+.boa-player-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #ff640a;
+}
+
+.boa-player-auto {
+  display: block;
+  margin: 2px 0 10px;
+  color: #bdbdbd;
+}
+
+.boa-player-reset {
+  padding: 4px 10px;
+  background: #171717;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #e8e8e8;
+  cursor: pointer;
+}
+
+html.boa-theme-off .boa-player-wrap {
+  display: none;
+}

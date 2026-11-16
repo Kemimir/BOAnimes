@@ -3,6 +3,7 @@ import { AnimeEntry, AnimeStatus, EpisodeFav, NextEpisode } from '../shared/type
 import { closeDetail, DetailHooks, openDetail } from './detail';
 import { runLite } from './lite';
 import { ensureRowArrows } from './rows';
+import { applyPlayer, buildPlayerButton } from './player';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
@@ -191,6 +192,7 @@ function buildGroup(kind: PageKind): HTMLElement {
   group.appendChild(element('span', 'boa-divider'));
   const keys: ButtonKey[] = kind === 'watch' ? ['wide', 'episode', ...SERIES_TABS] : SERIES_TABS;
   for (const buttonKey of keys) group.appendChild(createButton(buttonKey, 'boa-icon-btn'));
+  if (kind === 'watch') group.appendChild(buildPlayerButton());
   group.appendChild(element('span', 'boa-progress'));
   group.addEventListener('click', event => {
     const button = (event.target as Element).closest<HTMLElement>('.boa-icon-btn');
@@ -371,6 +373,7 @@ function syncWatch(): void {
     void refreshProgress();
   }
   bindVideoEnd();
+  applyPlayer();
 }
 
 function bindVideoEnd(): void {
