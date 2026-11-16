@@ -1,3 +1,5 @@
+<p align="center"><img src="public/icons/icon-128.png" alt="BOAnimes icon" width="96"></p>
+
 # BOAnimes – By Kemir
 
 Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora a Crunchyroll e acompanha o seu progresso em animes. Disponível em **português, inglês e espanhol**.
@@ -13,6 +15,8 @@ Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora 
 **Visual**
 - Tema preto próprio, cabeçalho flutuante e cards redesenhados.
 - Fileiras de séries em grade compacta (2 fileiras, pôster quadrado, título, Leg | Dub e botões), com setas laterais suaves. Dá para voltar ao layout original com um interruptor.
+- Cabeçalho sem barra: cada item é um botão com contorno, o botão "+" guarda Simulcast, Jogos e Notícias e o menu da conta é compacto. Ao rolar, sobram só o ícone da logo e o menu da conta.
+- Cards da grade transparentes, com os botões só no hover.
 - Janela de detalhes ao passar o mouse sobre uma série (capa, nota, sinopse e ações).
 - Barrinha de progresso nos pôsteres e selos de status.
 - Modo leve: libera as imagens das fileiras que saíram da tela, para a página usar menos memória.
@@ -30,6 +34,8 @@ Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora 
 - Em outros sites, funciona pelo popup: detecta o player e o título, busca no AniList e marca o episódio.
 - Login opcional com o AniList para enviar o progresso.
 - Exportar e importar backup.
+- Chave geral no popup: desligada, a Crunchyroll volta a ser como o site entrega.
+- Interface em português, inglês e espanhol.
 
 ## Instalação (modo desenvolvedor)
 
