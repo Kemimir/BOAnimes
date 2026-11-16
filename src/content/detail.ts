@@ -30,8 +30,9 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, 
  */
 function sharpCover(card: Element): string | undefined {
   const urls = Array.from(card.querySelectorAll<HTMLImageElement>('a[class*="poster-wrapper"] img'))
-    .map(image => image.currentSrc || image.src)
-    .filter(Boolean);
+    // O modo leve troca imagens por um pixel (data:) e guarda o endereço real em data-boa-src.
+    .map(image => image.dataset.boaSrc || image.currentSrc || image.src)
+    .filter(url => Boolean(url) && !url.startsWith('data:'));
   const sharp = urls.find(url => !/blur=\d+/.test(url));
   if (sharp) return sharp;
   const blurred = urls[0];
