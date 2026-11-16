@@ -89,7 +89,8 @@ function dropBlurredPreviews(): void {
   const candidates = document.querySelectorAll<HTMLImageElement>('img[src*="blur="]:not([data-boa-blur]), img[srcset*="blur="]:not([data-boa-blur])');
   for (const blurred of candidates) {
     if (budget <= 0) break;
-    const holder = blurred.closest('[class*="progressive-image-loading"]');
+    // A própria imagem borrada tem "progressive-image-loading" na classe: parte do pai, e só <div>.
+    const holder = blurred.parentElement?.closest('div[class*="progressive-image-loading"]');
     const sharp = Array.from(holder?.querySelectorAll<HTMLImageElement>('img') ?? [])
       .find(image => image !== blurred && !isBlurred(image) && image.complete && image.naturalWidth > 0);
     if (!sharp) continue;

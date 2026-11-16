@@ -988,7 +988,11 @@ function tick(): void {
   if (!document.hidden) {
     sync();
     backlog = decorateIn(document);
-    runLite(storage.peekSettings().liteMode);
+    try {
+      runLite(storage.peekSettings().liteMode);
+    } catch {
+      // O modo leve é opcional: um erro nele não pode parar o ciclo da extensão.
+    }
   }
   const busy = backlog || performance.now() < busyUntil;
   tickTimer = window.setTimeout(tick, busy ? TICK_BUSY_MS : TICK_IDLE_MS);
