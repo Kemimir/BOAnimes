@@ -113,6 +113,7 @@ add('AniList respondeu {status}', 'AniList answered {status}', 'AniList respondi
 add('Abra a Crunchyroll (logado) em uma aba e tente de novo.', 'Open Crunchyroll (logged in) in a tab and try again.', 'Abre Crunchyroll (con sesión iniciada) en una pestaña e inténtalo de nuevo.');
 add('Faça login na Crunchyroll para usar as Crunchylistas.', 'Log in to Crunchyroll to use Crunchylists.', 'Inicia sesión en Crunchyroll para usar las Crunchylists.');
 add('Pronto: {total} séries conferidas.', 'Done: {total} series checked.', 'Listo: {total} series revisadas.');
+add('Mais', 'More', 'Más');
 add('Login cancelado.', 'Login cancelled.', 'Inicio de sesión cancelado.');
 add('Copiado', 'Copied', 'Copiado');
 add('Copiar', 'Copy', 'Copiar');

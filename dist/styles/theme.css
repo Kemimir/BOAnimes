@@ -44,7 +44,6 @@ html:not(.boa-theme-off) .erc-large-header .header-content {
 
 html:not(.boa-theme-off) .erc-large-header .header-logo {
   padding-left: 0;
-  zoom: 1.25;
 }
 
 html:not(.boa-theme-off) .erc-large-header .erc-header-tile {
@@ -70,55 +69,75 @@ html:not(.boa-theme-off) .erc-large-header .erc-header-tile.state-active {
   color: #fff;
 }
 
-/* Contorno preto leve em volta do logo, para ele não se perder sobre imagens claras. */
-html:not(.boa-theme-off) .erc-large-header .header-logo svg {
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, .95)) drop-shadow(0 0 2px rgba(0, 0, 0, .75));
+/* Logo: contorno preto de verdade (traço atrás do preenchimento) e tamanho fixo, para o
+   texto poder recolher na rolagem deixando só o ícone. */
+html:not(.boa-theme-off) .erc-large-header .header-logo a {
+  display: block;
+  width: 214px;
+  padding: 0;
+  overflow: hidden;
+  transition: width .35s ease;
 }
 
-/* Rolando para baixo, o cabeçalho some; ao passar o mouse nele (ou focar com o teclado) volta.
+html:not(.boa-theme-off) .erc-large-header .header-logo svg {
+  display: block;
+  width: 210px !important;
+  height: 36px !important;
+  margin: 8px 0 8px 2px;
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-logo svg path {
+  stroke: #000;
+  stroke-width: 2.4px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+
+/* Rolando para baixo: o texto do logo recolhe até sobrar só o ícone, e os botões do
+   cabeçalho somem. Passando o mouse na faixa do topo (ou focando com o teclado) tudo volta.
    A marca boa-scrolled é posta pela extensão quando a página desce do topo. */
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content {
-  opacity: 0;
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-logo a {
+  width: 44px;
+}
+
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-logo a,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-logo a {
+  width: 214px;
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-nav,
+html:not(.boa-theme-off) .erc-large-header .header-actions {
   transition: opacity .2s;
 }
 
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover,
-html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within {
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-nav,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-actions {
+  opacity: 0;
+}
+
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-nav,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:hover .header-actions,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-nav,
+html:not(.boa-theme-off).boa-scrolled .erc-large-header .header-content:focus-within .header-actions {
   opacity: 1;
 }
 
-/* ----- Menu da conta no mesmo estilo: fundo preto, contorno leve, ícones laranja ----- */
-html:not(.boa-theme-off) .erc-authenticated-user-menu-old > div {
-  background: #0a0a0a !important;
-  border: 1px solid rgba(255, 255, 255, .14);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: none !important;
+/* Sem o risquinho divisor que o site põe depois de Categorias. */
+html:not(.boa-theme-off) .erc-large-header .header-menu .state-visible-on-desktop::after {
+  display: none !important;
 }
 
-html:not(.boa-theme-off) [class*="user-menu-section"] + [class*="user-menu-section"] {
-  border-top: 1px solid rgba(255, 255, 255, .08);
+/* Simulcast, Jogos e Notícias saem da barra e vão para o botão "+" da extensão (os links
+   continuam existindo; o botão os lista). Nada é removido do site. */
+html:not(.boa-theme-off) .erc-large-header .simulcast-link,
+html:not(.boa-theme-off) .erc-large-header .header-external-links {
+  display: none !important;
 }
 
-html:not(.boa-theme-off) [class*="user-menu-nav-item"],
-html:not(.boa-theme-off) [class*="user-menu-account-item"] {
-  margin-inline: 8px;
-  border-radius: 12px;
-  background: transparent !important;
-  box-shadow: inset 0 0 0 1px transparent;
-  transition: box-shadow .15s, color .15s;
-}
-
-html:not(.boa-theme-off) [class*="user-menu-nav-item"]:hover,
-html:not(.boa-theme-off) [class*="user-menu-nav-item"]:focus-visible,
-html:not(.boa-theme-off) [class*="user-menu-account-item"]:hover {
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 100, 10, .55);
-}
-
-html:not(.boa-theme-off) [class*="user-menu-nav-item"] svg {
-  color: #ff640a;
-  fill: currentColor;
+/* ----- Menu da conta: o painel nativo fica de fora; a extensão monta o seu (headermenu.ts) a
+   partir dos mesmos itens e repassa o clique para eles, então nada deixa de funcionar. ----- */
+html:not(.boa-theme-off) .erc-authenticated-user-menu-old > div:not(.erc-header-tile):not(.boa-account-panel) {
+  display: none !important;
 }
 
 /* Jogos e Notícias continuam acessíveis, só saem do primeiro plano. */
