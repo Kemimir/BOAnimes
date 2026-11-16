@@ -126,13 +126,11 @@ add('Abrindo o login do AniList…', 'Opening AniList login…', 'Abriendo el in
 add('Não consegui conectar: {error}', 'Could not connect: {error}', 'No pude conectar: {error}');
 add('{count} séries importadas.', '{count} series imported.', '{count} series importadas.');
 add('Arquivo de backup inválido.', 'Invalid backup file.', 'Archivo de copia de seguridad no válido.');
-add('Atualização disponível: v{version}', 'Update available: v{version}', 'Actualización disponible: v{version}');
 add('Sincronizando…', 'Syncing…', 'Sincronizando…');
 add('Episódio {n}', 'Episode {n}', 'Episodio {n}');
 
 /* ---------- textos fixos do popup (popup.html) ---------- */
 add('Ajustes', 'Settings', 'Ajustes');
-add('Abrir GitHub', 'Open GitHub', 'Abrir GitHub');
 add('Nesta página', 'On this page', 'En esta página');
 add('Nome da série', 'Series name', 'Nombre de la serie');
 add('Número do episódio', 'Episode number', 'Número del episodio');
@@ -194,7 +192,6 @@ add('Aperta o botão "Pular" que o próprio player mostra, como você faria com 
 add('Ajusta nitidez, volume e cor da imagem somente na sua tela.', 'Adjusts sharpness, volume and image color only on your screen.', 'Ajusta nitidez, volumen y color de la imagen solo en tu pantalla.');
 add('Só em páginas da Crunchyroll abertas por você. Em outros sites, só age quando você abre o popup.', 'Only on Crunchyroll pages you opened. On other sites, it only acts when you open the popup.', 'Solo en páginas de Crunchyroll abiertas por ti. En otros sitios, solo actúa cuando abres el popup.');
 add('Crunchylistas só se o recurso estiver ligado. AniList só depois de você conectar.', 'Crunchylists only if the feature is on. AniList only after you connect.', 'Crunchylists solo si la función está activada. AniList solo después de que conectes.');
-add('De vez em quando confere no GitHub se existe uma versão nova.', 'From time to time it checks GitHub for a new version.', 'De vez en cuando comprueba en GitHub si hay una versión nueva.');
 add('Não baixa nem grava vídeos, não burla proteção de conteúdo nem restrição de região.', 'Does not download or record videos, and does not bypass content protection or region restrictions.', 'No descarga ni graba vídeos, ni evita la protección de contenido ni las restricciones de región.');
 add('Não bloqueia nem esconde anúncios ou avisos do site.', 'Does not block or hide the site\'s ads or notices.', 'No bloquea ni oculta anuncios o avisos del sitio.');
 add('Não copia o catálogo, não cria índice de conteúdo e não faz login por você.', 'Does not copy the catalog, does not build a content index and does not log in for you.', 'No copia el catálogo, no crea un índice de contenido y no inicia sesión por ti.');

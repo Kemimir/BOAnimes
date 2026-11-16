@@ -43,36 +43,4 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (message) void chrome.tabs.sendMessage(tab.id, message).catch(() => undefined);
 });
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'CHECK_UPDATE') {
-    void checkForUpdate().then(sendResponse);
-    return true;
-  }
-  return false;
-});
-
-async function checkForUpdate(): Promise<{ available: boolean; current: string; latest: string; url: string }> {
-  const current = chrome.runtime.getManifest().version;
-  const url = 'https://github.com/Kemimir/BOAnimes/releases';
-  try {
-    const response = await fetch('https://raw.githubusercontent.com/Kemimir/BOAnimes/main/manifest.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const remote = await response.json() as { version?: string };
-    const latest = typeof remote.version === 'string' ? remote.version : current;
-    return { available: compareVersions(latest, current) > 0, current, latest, url };
-  } catch {
-    return { available: false, current, latest: current, url };
-  }
-}
-
-function compareVersions(left: string, right: string): number {
-  const a = left.split('.').map(Number);
-  const b = right.split('.').map(Number);
-  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
-    const difference = (a[index] || 0) - (b[index] || 0);
-    if (difference) return difference;
-  }
-  return 0;
-}
-
 export {};

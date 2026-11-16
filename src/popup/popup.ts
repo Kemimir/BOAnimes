@@ -539,21 +539,12 @@ function setupSettings(): void {
   });
 }
 
-function checkForUpdate(): void {
-  chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' }, result => {
-    if (chrome.runtime.lastError || !result?.available) return;
-    $('updateText').textContent = t('Atualização disponível: v{version}', { version: result.latest });
-    $('updateNotice').hidden = false;
-  });
-}
-
 async function init(): Promise<void> {
   await storage.init();
   settings = await storage.getSettings();
   setLanguage(settings.language);
   setupSettings();
   renderAll();
-  checkForUpdate();
   translateDom(document.body);
 
   $('detSearch').addEventListener('click', () => void runSearch());

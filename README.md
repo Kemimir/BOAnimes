@@ -57,7 +57,7 @@ Outros comandos: `npm run dev` (build contínua) e `npm run typecheck` (checagem
 - **O que faz:** muda a aparência da Crunchyroll no seu navegador, guarda o que você marca e aperta botões que o próprio site já mostra.
 - **O que não faz:** não baixa nem grava vídeos, não burla proteção de conteúdo (DRM) nem restrição de região, não bloqueia nem esconde anúncios ou avisos, não copia o catálogo e não faz login por você.
 - **Dados:** ficam no seu navegador. Não existe servidor do BOAnimes. O sync entre dispositivos usa o sync do próprio navegador e é opcional. O token do AniList fica neste navegador e é apagado em "Sair".
-- **Rede:** além da própria Crunchyroll (na sua sessão) e do AniList (se você conectar), a extensão só consulta o GitHub para saber se há versão nova.
+- **Rede:** além da própria Crunchyroll (na sua sessão) e do AniList (se você conectar), não faz nenhuma outra conexão. Não há verificação de atualização própria: pela loja o navegador atualiza sozinho; pelo zip, veja os Releases.
 - **Termos da Crunchyroll:** eles proíbem, entre outras coisas, baixar ou gravar conteúdo, burlar proteções e fazer acesso automatizado em massa. A extensão foi feita para não fazer nada disso, mas **ninguém pode garantir como o site interpreta os termos**. Use por sua conta.
 
 Essa explicação também aparece dentro da extensão (Ajustes → "Como funciona e termos de uso").
