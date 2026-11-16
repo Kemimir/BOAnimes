@@ -25,6 +25,19 @@ export interface AniMedia {
   episodes: number | null;
   format: string | null;
   seasonYear: number | null;
+  startDate: { year: number | null; month: number | null; day: number | null } | null;
+  /** Continuações e antecessoras diretas (grafo de temporadas do AniList). */
+  sequels?: AniNode[];
+  prequels?: AniNode[];
+}
+
+/** Dados mínimos de uma entrada vizinha no grafo de temporadas. */
+export interface AniNode {
+  id: number;
+  format: string | null;
+  episodes: number | null;
+  year: number | null;
+  title: string;
 }
 
 export interface AniAuth {
@@ -51,30 +64,58 @@ async function gql<T>(query: string, variables: Record<string, unknown>, token?:
 
 /* ---------------- busca ---------------- */
 
+const MEDIA_FIELDS = `id idMal title { romaji english native } coverImage { large } episodes format seasonYear
+  startDate { year month day }
+  relations { edges { relationType node { id format episodes title { romaji english } startDate { year } } } }`;
+
 const SEARCH = `query ($search: String) {
-  Page(perPage: 6) {
-    media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
-      id idMal title { romaji english native } coverImage { large } episodes format seasonYear
-    }
+  Page(perPage: 10) {
+    media(search: $search, type: ANIME, sort: SEARCH_MATCH) { ${MEDIA_FIELDS} }
   }
 }`;
+
+const BY_ID = `query ($id: Int) { Media(id: $id, type: ANIME) { ${MEDIA_FIELDS} } }`;
+
+interface RawEdgeNode { id: number; format: string | null; episodes: number | null; title: { romaji: string | null; english: string | null }; startDate: { year: number | null } | null }
+type RawMedia = Omit<AniMedia, 'sequels' | 'prequels'> & { relations?: { edges: { relationType: string; node: RawEdgeNode }[] } };
+
+function toMedia(raw: RawMedia): AniMedia {
+  const { relations, ...media } = raw;
+  const pick = (type: string): AniNode[] => (relations?.edges || [])
+    .filter(edge => edge.relationType === type)
+    .map(edge => ({
+      id: edge.node.id,
+      format: edge.node.format,
+      episodes: edge.node.episodes,
+      year: edge.node.startDate?.year ?? null,
+      title: edge.node.title.english || edge.node.title.romaji || ''
+    }));
+  return { ...media, sequels: pick('SEQUEL'), prequels: pick('PREQUEL') };
+}
 
 type Cache = Record<string, { at: number; media: AniMedia[] }>;
 
 export async function searchAnime(query: string): Promise<AniMedia[]> {
   const term = query.trim();
   if (!term) return [];
-  const cacheKey = term.toLowerCase();
+  const cacheKey = `v3:${term.toLowerCase()}`;
   const stored = (await chrome.storage.local.get(CACHE_KEY))[CACHE_KEY] as Cache | undefined;
   const hit = stored?.[cacheKey];
   if (hit && Date.now() - hit.at < CACHE_TTL) return hit.media;
 
-  const data = await gql<{ Page: { media: AniMedia[] } }>(SEARCH, { search: term });
-  const cache: Cache = { ...(stored || {}), [cacheKey]: { at: Date.now(), media: data.Page.media } };
+  const data = await gql<{ Page: { media: RawMedia[] } }>(SEARCH, { search: term });
+  const media = data.Page.media.map(toMedia);
+  const cache: Cache = { ...(stored || {}), [cacheKey]: { at: Date.now(), media } };
   const keys = Object.keys(cache).sort((a, b) => cache[b].at - cache[a].at);
   for (const old of keys.slice(CACHE_MAX)) delete cache[old];
   await chrome.storage.local.set({ [CACHE_KEY]: cache });
-  return data.Page.media;
+  return media;
+}
+
+/** Busca uma entrada específica (usada quando a temporada resolvida não veio na busca). */
+export async function fetchAnime(id: number): Promise<AniMedia> {
+  const data = await gql<{ Media: RawMedia }>(BY_ID, { id });
+  return toMedia(data.Media);
 }
 
 /* ---------------- conta ---------------- */
@@ -204,4 +245,98 @@ export function parseTitle(candidates: string[], url: string): ParsedTitle {
     if (best.episode !== null) break;
   }
   return best;
+}
+
+/* ---------------- temporada e numeração absoluta ---------------- */
+
+export interface Resolution {
+  /** Posição do resultado escolhido na lista, ou -1 se ele não veio na busca (use `mediaId`). */
+  index: number;
+  /** Id da entrada escolhida do AniList. */
+  mediaId: number | null;
+  /** Número do episódio dentro da entrada escolhida. */
+  episode: number | null;
+  /** Explicação curta quando o BOAnimes corrigiu a temporada ou o episódio. */
+  note: string;
+}
+
+const isSeries = (format: string | null): boolean => format === 'TV' || format === 'TV_SHORT';
+
+const nodeOf = (media: AniMedia): AniNode => ({
+  id: media.id,
+  format: media.format,
+  episodes: media.episodes,
+  year: media.startDate?.year ?? media.seasonYear,
+  title: displayTitle(media)
+});
+
+/**
+ * Temporadas da franquia na ordem em que o AniList as encadeia (SEQUEL).
+ * Filmes, OVAs e PVs no meio do caminho são atravessados mas não contam.
+ */
+export function seasonChain(results: AniMedia[]): AniNode[] {
+  const byId = new Map(results.map(media => [media.id, media]));
+  if (!results.length) return [];
+
+  // Volta até o começo da franquia pelas antecessoras que já vieram na busca.
+  let root = results[0];
+  const back = new Set<number>([root.id]);
+  for (;;) {
+    const previous = (root.prequels || []).map(node => byId.get(node.id)).find(media => media && !back.has(media.id));
+    if (!previous) break;
+    back.add(previous.id);
+    root = previous;
+  }
+
+  const edgeNodes = new Map<number, AniNode>();
+  for (const media of results) for (const node of [...(media.sequels || []), ...(media.prequels || [])]) edgeNodes.set(node.id, node);
+
+  const chain: AniNode[] = [];
+  const visited = new Set<number>();
+  let currentId: number | undefined = root.id;
+  while (currentId !== undefined && !visited.has(currentId)) {
+    visited.add(currentId);
+    const media = byId.get(currentId);
+    const info = media ? nodeOf(media) : edgeNodes.get(currentId);
+    if (!info) break;
+    if (isSeries(info.format)) chain.push(info);
+    // Só se conhece as continuações de quem veio na busca; entre elas, TV tem prioridade.
+    const next = [...(media?.sequels || [])].sort((a, b) =>
+      Number(isSeries(b.format)) - Number(isSeries(a.format)) || (a.year ?? 9999) - (b.year ?? 9999))[0];
+    currentId = next?.id;
+  }
+  return chain;
+}
+
+/**
+ * O AniList trata cada temporada como uma série própria, mas os sites falam em
+ * "temporada 2, episódio 5" ou numeram tudo em sequência ("episódio 29"). Esta
+ * função escolhe a entrada certa do AniList e converte o número do episódio.
+ */
+export function resolveAnime(results: AniMedia[], season: number | null, episode: number | null): Resolution {
+  if (!results.length) return { index: -1, mediaId: null, episode, note: '' };
+  const top = results[0];
+  const direct: Resolution = { index: 0, mediaId: top.id, episode, note: '' };
+  const chain = seasonChain(results);
+  if (chain.length < 2) return direct;
+  const locate = (node: AniNode) => results.findIndex(media => media.id === node.id);
+
+  if (season && season > 1 && chain[season - 1]) {
+    const target = chain[season - 1];
+    return { index: locate(target), mediaId: target.id, episode, note: `Temporada ${season}: ${target.title}` };
+  }
+
+  // Numeração absoluta: o episódio passa do total da entrada e cai numa das seguintes.
+  if (episode && top.episodes && episode > top.episodes) {
+    let offset = 0;
+    for (let position = Math.max(0, chain.findIndex(node => node.id === top.id)); position < chain.length; position += 1) {
+      const count = chain[position].episodes ?? Number.POSITIVE_INFINITY;
+      if (episode <= offset + count) {
+        const local = episode - offset;
+        return { index: locate(chain[position]), mediaId: chain[position].id, episode: local, note: `Episódio ${episode} em sequência = ${chain[position].title}, ep. ${local}` };
+      }
+      offset += count;
+    }
+  }
+  return direct;
 }

@@ -1,6 +1,6 @@
 import { storage } from '../shared/storage';
-import { AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/types';
-import { fetchSeriesProgress, isLoggedIn, setListEventHandler, syncEntryLists } from './crunchyroll-api';
+import { AnimeEntry, AnimeStatus, EpisodeFav, NextEpisode } from '../shared/types';
+import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
  * Integração do BOAnimes com a Crunchyroll.
@@ -256,20 +256,37 @@ function ensureEntry(id: string, title: string, coverUrl: string | undefined, st
  * temporadas, versões dub/leg contadas uma vez). Sem login, cai na contagem
  * de cards da temporada aberta, que só ajuda a saber o total.
  */
+const toNext = (next: UpNext): NextEpisode => ({
+  id: next.id,
+  title: next.title,
+  number: next.number ?? undefined,
+  playhead: next.playhead,
+  durationMs: next.durationMs,
+  never: next.never
+});
+
 async function refreshProgress(): Promise<void> {
   const entry = page.entry;
   if (!entry) return;
-  const progress = await fetchSeriesProgress(entry.id);
-  if (!progress || page.entry?.id !== entry.id) return;
+  const [progress, next] = await Promise.all([fetchSeriesProgress(entry.id), fetchUpNext(entry.id)]);
+  if (page.entry?.id !== entry.id) return;
   let changed = false;
-  if (entry.totalEpisodes !== progress.total) { entry.totalEpisodes = progress.total; changed = true; }
-  if (entry.episodesWatched !== progress.watched) { entry.episodesWatched = progress.watched; changed = true; }
-  // Só promove o status; nunca rebaixa uma escolha manual do usuário.
-  if (progress.watched > 0 && entry.status === 'watch_later') { entry.status = 'watching'; changed = true; }
-  if (progress.total > 0 && progress.watched >= progress.total && entry.status === 'watching') { entry.status = 'watched'; changed = true; }
+  if (next) {
+    const before = entry.next;
+    entry.next = toNext(next);
+    entry.nextAt = Date.now();
+    if (!before || before.id !== next.id || Math.abs(before.playhead - next.playhead) > 5) changed = true;
+  }
+  if (progress) {
+    if (entry.totalEpisodes !== progress.total) { entry.totalEpisodes = progress.total; changed = true; }
+    if (entry.episodesWatched !== progress.watched) { entry.episodesWatched = progress.watched; changed = true; }
+    // Só promove o status; nunca rebaixa uma escolha manual do usuário.
+    if (progress.watched > 0 && entry.status === 'watch_later') { entry.status = 'watching'; changed = true; }
+    if (progress.total > 0 && progress.watched >= progress.total && entry.status === 'watching') { entry.status = 'watched'; changed = true; }
+  }
   if (!changed) return;
   // Rascunho sem nada assistido continua só na memória, mas o contador aparece.
-  if (page.draft && progress.watched === 0) paintGroup();
+  if (page.draft && !(progress && progress.watched > 0)) paintGroup();
   else await commit(entry);
 }
 
@@ -517,6 +534,100 @@ function repaintAll(): void {
   renderQuick();
 }
 
+/* ---------- detecção pelo histórico da conta ---------- */
+
+const HISTORY_KEY = 'boanimes_history_at';
+const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const HISTORY_MAX_NEW = 15;
+const NEXT_TTL_MS = 10 * 60 * 1000;
+let historyStarted = false;
+
+/**
+ * Traz para a biblioteca o que a conta assistiu em outros aparelhos desde a
+ * última conferência. Séries novas entram só na biblioteca (sem tocar nas
+ * Crunchylistas); quem já estava em "Assistir depois" vira "Assistindo".
+ * Séries que a pessoa removeu só voltam se ela assistir de novo.
+ */
+async function importHistory(): Promise<void> {
+  if (historyStarted) return;
+  historyStarted = true;
+  if (!(await isLoggedIn())) return;
+  const stored = (await chrome.storage.local.get(HISTORY_KEY))[HISTORY_KEY] as number | undefined;
+  const cutoff = stored ?? Date.now() - HISTORY_WINDOW_MS;
+  const items = await fetchRecentHistory(40);
+  if (!items.length) return; // falha de rede: tenta de novo na próxima visita
+
+  const touched: AnimeEntry[] = [];
+  const promoted: AnimeEntry[] = [];
+  let added = 0;
+  for (const item of items) {
+    if (item.playedAt <= cutoff) continue;
+    const existing = storage.peek(key(item.seriesId));
+    if (existing) {
+      existing.lastUpdated = Math.max(existing.lastUpdated, item.playedAt);
+      if (existing.status === 'watch_later') {
+        existing.status = 'watching';
+        promoted.push(existing);
+      }
+      touched.push(existing);
+    } else if (added < HISTORY_MAX_NEW) {
+      added += 1;
+      touched.push({
+        id: item.seriesId,
+        title: item.seriesTitle,
+        coverUrl: item.thumb,
+        site: SITE,
+        siteUrl: window.location.origin,
+        status: 'watching',
+        episodesWatched: 0,
+        lastUpdated: item.playedAt
+      });
+    }
+  }
+  if (touched.length) await storage.setMany(touched);
+  await chrome.storage.local.set({ [HISTORY_KEY]: Date.now() });
+  if (!touched.length) return;
+  repaintAll();
+  for (const entry of promoted) void pushToCrunchylists(entry);
+  if (added) showToast(`${added} ${added === 1 ? 'série do seu histórico entrou' : 'séries do seu histórico entraram'} no BOAnimes`);
+}
+
+/** Atualiza o "próximo episódio" das séries em andamento cujo dado está velho. */
+async function refreshStaleNext(): Promise<void> {
+  const stale = storage.list()
+    .filter(entry => entry.site === SITE && entry.status === 'watching' && Date.now() - (entry.nextAt || 0) > NEXT_TTL_MS)
+    .sort((a, b) => b.lastUpdated - a.lastUpdated)
+    .slice(0, 8);
+  if (!stale.length || !(await isLoggedIn())) return;
+  const results = await Promise.all(stale.map(entry => fetchUpNext(entry.id)));
+  stale.forEach((entry, index) => {
+    entry.nextAt = Date.now();
+    const next = results[index];
+    if (next) entry.next = toNext(next);
+  });
+  await storage.setMany(stale);
+  renderQuick();
+}
+
+const clock = (seconds: number): string => {
+  const total = Math.max(0, Math.round(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+/** Texto de "continuar de onde parou" para uma série em andamento. */
+function continueLabel(entry: AnimeEntry): string {
+  const next = entry.next;
+  const parts: string[] = [];
+  if (next) {
+    const episode = next.number ? `E${next.number}` : 'episódio';
+    if (next.never) parts.push(`Começar ${episode}`);
+    else if (next.playhead >= 30 && next.durationMs) parts.push(`Continuar ${episode} · ${clock(next.playhead)}/${clock(next.durationMs / 1000)}`);
+    else parts.push(`Próximo: ${episode}`);
+  }
+  if (entry.totalEpisodes) parts.push(`${entry.episodesWatched || 0}/${entry.totalEpisodes}`);
+  return parts.join(' · ') || STATUS_NAMES[entry.status];
+}
+
 /* ---------- acesso rápido (header) ---------- */
 
 const QUICK_ICON = 'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z';
@@ -571,6 +682,7 @@ function toggleQuick(wrap: HTMLElement, button: HTMLElement): void {
   wrap.appendChild(quickPanel);
   button.setAttribute('aria-expanded', 'true');
   renderQuick();
+  void refreshStaleNext();
   // Só existem ouvintes globais enquanto o painel está aberto.
   document.addEventListener('click', onQuickOutside);
   document.addEventListener('keydown', onQuickKey);
@@ -641,6 +753,11 @@ function renderQuick(): void {
     const items = series.filter(entry => isActive(entry, tabStatus)).sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 40);
     if (!items.length) list.appendChild(element('p', 'boa-quick-empty', QUICK_EMPTY[quickTab]));
     for (const entry of items) {
+      if (quickTab === 'watching') {
+        const href = entry.next ? `${prefix}/watch/${entry.next.id}` : `${prefix}/series/${entry.id}`;
+        list.appendChild(quickItem(href, entry.title, continueLabel(entry), entry.coverUrl));
+        continue;
+      }
       const watched = entry.episodesWatched || 0;
       const detail = entry.totalEpisodes ? `${watched}/${entry.totalEpisodes} episódios` : watched ? `${watched} episódio(s)` : STATUS_NAMES[entry.status];
       list.appendChild(quickItem(`${prefix}/series/${entry.id}`, entry.title, detail, entry.coverUrl));
@@ -674,6 +791,7 @@ export function initCrunchyroll(): void {
   window.addEventListener('popstate', scheduleSync);
   document.addEventListener('pointerover', onEpisodeHover, { passive: true });
   storage.subscribe(repaintAll);
+  window.setTimeout(() => void importHistory(), 2500);
 }
 
 /* ---------- API usada pelo popup, atalhos e menu de contexto ---------- */

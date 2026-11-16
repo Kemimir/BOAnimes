@@ -193,6 +193,80 @@ export async function fetchSeriesProgress(seriesId: string): Promise<SeriesProgr
 }
 
 /* ------------------------------------------------------------------ */
+/* Continuar de onde parou                                             */
+/* ------------------------------------------------------------------ */
+
+export interface UpNext {
+  id: string;
+  title: string;
+  number: number | null;
+  playhead: number;
+  durationMs: number;
+  never: boolean;
+}
+
+interface Panel {
+  id: string;
+  type?: string;
+  title: string;
+  images?: { thumbnail?: { width: number; source: string }[][] };
+  episode_metadata?: { episode_number?: number; duration_ms?: number; series_id?: string; series_title?: string };
+}
+
+/** O episódio que a conta deve assistir a seguir nesta série (ou o que está pela metade). */
+export async function fetchUpNext(seriesId: string): Promise<UpNext | null> {
+  const result = await api<{ data?: { playhead: number; never_watched: boolean; panel?: Panel }[] }>(
+    `/content/v2/discover/up_next/${seriesId}?locale=${locale()}`
+  );
+  const item = result.ok ? result.json?.data?.[0] : undefined;
+  if (!item?.panel) return null;
+  return {
+    id: item.panel.id,
+    title: item.panel.title,
+    number: item.panel.episode_metadata?.episode_number ?? null,
+    playhead: item.playhead || 0,
+    durationMs: item.panel.episode_metadata?.duration_ms || 0,
+    never: Boolean(item.never_watched)
+  };
+}
+
+export interface HistoryItem {
+  seriesId: string;
+  seriesTitle: string;
+  thumb?: string;
+  playedAt: number;
+  fullyWatched: boolean;
+}
+
+/**
+ * Histórico recente da conta, uma linha por série (a mais recente primeiro).
+ * Inclui o que foi assistido no celular, na TV ou em outro navegador.
+ */
+export async function fetchRecentHistory(limit = 40): Promise<HistoryItem[]> {
+  const result = await api<{
+    data?: { date_played: string; parent_id?: string; fully_watched: boolean; panel?: Panel }[];
+  }>(`/content/v2/{account}/watch-history?page_size=${limit}&locale=${locale()}`);
+  if (!result.ok) return [];
+  const seen = new Set<string>();
+  const items: HistoryItem[] = [];
+  for (const entry of result.json?.data || []) {
+    const panel = entry.panel;
+    const seriesId = panel?.episode_metadata?.series_id || entry.parent_id;
+    if (!panel || panel.type !== 'episode' || !seriesId || seen.has(seriesId)) continue;
+    seen.add(seriesId);
+    const sizes = (panel.images?.thumbnail?.[0] || []).slice().sort((a, b) => a.width - b.width);
+    items.push({
+      seriesId,
+      seriesTitle: panel.episode_metadata?.series_title || panel.title,
+      thumb: (sizes.find(size => size.width >= 300) || sizes[sizes.length - 1])?.source,
+      playedAt: Date.parse(entry.date_played) || 0,
+      fullyWatched: entry.fully_watched
+    });
+  }
+  return items;
+}
+
+/* ------------------------------------------------------------------ */
 /* Crunchylistas nativas                                               */
 /* ------------------------------------------------------------------ */
 

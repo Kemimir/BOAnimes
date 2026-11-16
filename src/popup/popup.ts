@@ -1,7 +1,7 @@
 import { storage, AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/storage';
 import { Settings } from '../shared/types';
 import {
-  AniMedia, clientId, connect, disconnect, displayTitle, getAuth, parseTitle, redirectUrl, savePlanning, saveProgress, searchAnime
+  AniMedia, clientId, connect, disconnect, displayTitle, fetchAnime, getAuth, parseTitle, redirectUrl, resolveAnime, savePlanning, saveProgress, searchAnime
 } from '../shared/anilist';
 import { PageProbe, probePage } from './detect';
 
@@ -101,6 +101,13 @@ function entryCard(entry: AnimeEntry): HTMLElement {
   if (entry.malId) {
     const link = h('a', '', 'MAL');
     link.href = `https://myanimelist.net/anime/${entry.malId}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    meta.appendChild(link);
+  }
+  if (entry.next && entry.status === 'watching') {
+    const link = h('a', '', `▶ ${entry.next.never ? 'Começar' : 'Continuar'} ${entry.next.number ? `E${entry.next.number}` : 'episódio'}`);
+    link.href = `${CR_ORIGIN}/watch/${entry.next.id}`;
     link.target = '_blank';
     link.rel = 'noopener';
     meta.appendChild(link);
@@ -208,6 +215,7 @@ interface Detection { probe: PageProbe; videos: number; hosts: string[] }
 
 let media: AniMedia[] = [];
 let selected = -1;
+let parsedSeason: number | null = null;
 let pageOrigin = '';
 
 async function detectPage(): Promise<void> {
@@ -245,6 +253,7 @@ async function detectPage(): Promise<void> {
 
   if (detection) {
     const parsed = parseTitle([detection.probe.jsonLd, detection.probe.h1, detection.probe.og, detection.probe.title], detection.probe.url);
+    parsedSeason = parsed.season;
     ($('detSeries') as HTMLInputElement).value = parsed.series;
     ($('detEp') as HTMLInputElement).value = parsed.episode !== null ? String(parsed.episode) : '';
     if (parsed.series) await runSearch();
@@ -266,8 +275,17 @@ async function runSearch(): Promise<void> {
   }
   const remembered = (await chrome.storage.local.get(MATCHES_KEY))[MATCHES_KEY] as Record<string, number> | undefined;
   const known = remembered?.[matchKey(query)];
-  selected = media.length ? Math.max(0, media.findIndex(item => item.id === known)) : -1;
-  status.textContent = media.length ? '' : 'Nenhum resultado. Tente um nome mais curto.';
+  const rememberedIndex = media.findIndex(item => item.id === known);
+  const typed = Math.floor(Number(($('detEp') as HTMLInputElement).value)) || null;
+  const resolved = resolveAnime(media, parsedSeason, typed);
+  if (rememberedIndex < 0 && resolved.index < 0 && resolved.mediaId) {
+    // A temporada resolvida não veio na busca: traz essa entrada e coloca no topo.
+    try { media = [await fetchAnime(resolved.mediaId), ...media]; resolved.index = 0; } catch { resolved.index = 0; }
+  }
+  selected = rememberedIndex >= 0 ? rememberedIndex : Math.max(0, resolved.index);
+  const fix = rememberedIndex < 0 ? resolved : null;
+  if (fix?.episode && fix.episode !== typed) ($('detEp') as HTMLInputElement).value = String(fix.episode);
+  status.textContent = media.length ? fix?.note || '' : 'Nenhum resultado. Tente um nome mais curto.';
   renderResults();
 }
 
@@ -496,6 +514,7 @@ async function init(): Promise<void> {
 
   $('detSearch').addEventListener('click', () => void runSearch());
   ($('detSeries') as HTMLInputElement).addEventListener('keydown', event => { if (event.key === 'Enter') void runSearch(); });
+  ($('detSeries') as HTMLInputElement).addEventListener('input', () => { parsedSeason = null; });
   $('detWatched').addEventListener('click', () => void markWatched());
   $('detPlan').addEventListener('click', () => void markPlanning());
   await detectPage();

@@ -21,6 +21,21 @@ export interface AnimeEntry {
   genres?: string[];
   /** Crunchylistas nas quais a série já foi adicionada pelo BOAnimes. */
   syncedLists?: ListKey[];
+  /** Próximo episódio a assistir (vem da conta, não de contagem local). */
+  next?: NextEpisode;
+  /** Quando `next` foi conferido pela última vez. */
+  nextAt?: number;
+}
+
+export interface NextEpisode {
+  id: string;
+  title: string;
+  number?: number;
+  /** Segundos já assistidos deste episódio. */
+  playhead: number;
+  durationMs: number;
+  /** Nunca iniciado: o botão deve dizer "Começar". */
+  never?: boolean;
 }
 
 /** Episódio favorito. Fica em um armazenamento próprio, separado das séries favoritas. */

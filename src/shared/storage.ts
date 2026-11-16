@@ -126,6 +126,16 @@ class StorageManager {
     await this.flush();
   }
 
+  /** Grava várias séries com uma única escrita. */
+  async setMany(entries: AnimeEntry[]): Promise<void> {
+    this.ensureInit();
+    for (const entry of entries) {
+      this.cache.set(this.getKey(entry), entry);
+      this.pushSync(this.getKey(entry), entry);
+    }
+    await this.flush();
+  }
+
   async remove(key: string): Promise<void> {
     this.ensureInit();
     this.cache.delete(key);
