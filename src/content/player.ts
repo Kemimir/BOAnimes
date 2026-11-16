@@ -5,6 +5,7 @@
 import { storage } from '../shared/storage';
 import { Settings } from '../shared/types';
 import { runAutoSkip } from './autoskip';
+import { t } from '../shared/i18n';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const FILTER_ID = 'boa-sharpen';
@@ -117,8 +118,8 @@ export function buildPlayerButton(): HTMLElement {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'boa-player-btn';
-  button.title = 'Ajustes do player (nitidez, volume, modo noturno)';
-  button.setAttribute('aria-label', 'Ajustes do player');
+  button.title = t('Ajustes do player (nitidez, volume, modo noturno)');
+  button.setAttribute('aria-label', t('Ajustes do player'));
   button.textContent = '🎚';
   const panel = document.createElement('div');
   panel.className = 'boa-player-panel';
@@ -137,7 +138,7 @@ export function buildPlayerButton(): HTMLElement {
     input.max = String(slider.max);
     input.step = String(slider.step);
     input.value = String(settings[slider.key]);
-    name.textContent = slider.label;
+    name.textContent = t(slider.label);
     value.textContent = `${input.value}${slider.unit}`;
     input.addEventListener('input', () => {
       value.textContent = `${input.value}${slider.unit}`;
@@ -154,11 +155,11 @@ export function buildPlayerButton(): HTMLElement {
   check.addEventListener('change', () => {
     void storage.updateSettings({ playerNightAuto: check.checked }).then(applyPlayer);
   });
-  auto.append(check, document.createTextNode(` Noturno só das ${NIGHT_FROM}h às ${NIGHT_TO}h`));
+  auto.append(check, document.createTextNode(t(' Noturno só das {from}h às {to}h', { from: NIGHT_FROM, to: NIGHT_TO })));
   const reset = document.createElement('button');
   reset.type = 'button';
   reset.className = 'boa-player-reset';
-  reset.textContent = 'Restaurar';
+  reset.textContent = t('Restaurar');
   reset.addEventListener('click', () => {
     void storage.updateSettings({ playerSharp: 0, playerGain: 100, playerNight: 0, playerNightAuto: false }).then(() => {
       applyPlayer();
@@ -178,7 +179,7 @@ export function buildPlayerButton(): HTMLElement {
   skipCheck.addEventListener('change', () => {
     void storage.updateSettings({ autoSkip: skipCheck.checked }).then(applyPlayer);
   });
-  skip.append(skipCheck, document.createTextNode(' Pular abertura e resumo (D cancela)'));
+  skip.append(skipCheck, document.createTextNode(' ' + t('Pular abertura e resumo (D cancela)')));
   panel.append(skip, auto, reset);
 
   button.addEventListener('click', event => {

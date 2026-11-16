@@ -1,3 +1,4 @@
+import { t } from '../shared/i18n';
 import { AnimeEntry, ListKey } from '../shared/types';
 
 /**
@@ -325,12 +326,12 @@ async function ensureList(key: ListKey): Promise<string | null> {
   const existing = index.ids.get(title.toLowerCase());
   if (existing) return existing;
   if (index.total >= index.max) {
-    onListEvent?.({ kind: 'error', title, reason: `limite de ${index.max} Crunchylistas atingido` });
+    onListEvent?.({ kind: 'error', title, reason: t('limite de {max} Crunchylistas atingido', { max: index.max }) });
     return null;
   }
   const created = await api('/content/v2/{account}/custom-lists', { method: 'POST', body: { title } });
   if (!created.ok) {
-    onListEvent?.({ kind: 'error', title, reason: `a Crunchyroll recusou (${created.status})` });
+    onListEvent?.({ kind: 'error', title, reason: t('a Crunchyroll recusou ({status})', { status: created.status }) });
     return null;
   }
   index = await loadListIndex(true);

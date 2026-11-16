@@ -2,6 +2,7 @@ import { storage } from '../shared/storage';
 import { AnimeStatus } from '../shared/types';
 import * as crunchyroll from './crunchyroll-page';
 import { cancelSkip } from './autoskip';
+import { setLanguage } from '../shared/i18n';
 
 /**
  * O content script só roda na Crunchyroll. Em qualquer outro site o BOAnimes
@@ -12,6 +13,7 @@ async function start(): Promise<void> {
   const flags = document.documentElement.dataset;
   if (flags.boaOff === '1' || flags.boaNoJs === '1') return; // pausada pela chave de diagnóstico
   await storage.init();
+  setLanguage(storage.peekSettings().language);
   crunchyroll.initCrunchyroll();
 }
 

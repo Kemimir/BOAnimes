@@ -1,26 +1,35 @@
+import { LanguagePreference, setLanguage, t } from '../shared/i18n';
+
 const CR_PATTERN = '*://*.crunchyroll.com/*';
 
-chrome.runtime.onInstalled.addListener(() => {
+async function createMenus(): Promise<void> {
+  const data = await chrome.storage.local.get('boanimes_settings');
+  setLanguage((data.boanimes_settings as { language?: LanguagePreference } | undefined)?.language);
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: 'boanimes-mark-watched',
-      title: 'Contar episódio como assistido (BOAnimes)',
+      title: t('Contar episódio como assistido (BOAnimes)'),
       contexts: ['page'],
       documentUrlPatterns: [CR_PATTERN]
     });
     chrome.contextMenus.create({
       id: 'boanimes-toggle-favorite',
-      title: 'Alternar série favorita (BOAnimes)',
+      title: t('Alternar série favorita (BOAnimes)'),
       contexts: ['page'],
       documentUrlPatterns: [CR_PATTERN]
     });
     chrome.contextMenus.create({
       id: 'boanimes-toggle-episode',
-      title: 'Alternar episódio favorito (BOAnimes)',
+      title: t('Alternar episódio favorito (BOAnimes)'),
       contexts: ['page'],
       documentUrlPatterns: ['*://*.crunchyroll.com/*/watch/*', '*://*.crunchyroll.com/watch/*']
     });
   });
+}
+
+chrome.runtime.onInstalled.addListener(() => void createMenus());
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.boanimes_settings) void createMenus();
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {

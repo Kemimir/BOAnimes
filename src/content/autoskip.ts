@@ -3,6 +3,7 @@
  * Não procura cenas, não mexe no tempo do vídeo e não faz nenhuma requisição.
  */
 import { storage } from '../shared/storage';
+import { t } from '../shared/i18n';
 
 type Kind = 'intro' | 'recap' | 'credits' | 'other';
 
@@ -43,7 +44,7 @@ export function cancelSkip(): boolean {
   window.clearTimeout(pending.timer);
   clicked = pending.button;
   pending = null;
-  notify('Pulo automático cancelado');
+  notify(t('Pulo automático cancelado'));
   return true;
 }
 

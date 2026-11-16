@@ -88,6 +88,8 @@ export interface Settings {
   playerKeys: boolean;
   /** O usuário já leu a explicação de como a extensão funciona. */
   aboutSeen: boolean;
+  /** Idioma da interface: automático (pelo site/navegador), português, inglês ou espanhol. */
+  language: 'auto' | 'pt' | 'en' | 'es';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -107,5 +109,6 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSkipCredits: false,
   autoSkipDelay: 3,
   playerKeys: true,
-  aboutSeen: false
+  aboutSeen: false,
+  language: 'auto'
 };

@@ -1,3 +1,4 @@
+import { setLanguage, t, translateDom } from '../shared/i18n';
 import { storage, AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/storage';
 import { Settings } from '../shared/types';
 import {
@@ -52,7 +53,7 @@ function renderChips(): void {
   const nav = $('chips');
   nav.replaceChildren(...TABS.map(({ key, label }) => {
     const count = key === 'episodes' ? storage.listEpisodes().length : entries.filter(entry => inTab(entry, key)).length;
-    const chip = h('button', 'chip', `${label} · ${count}`);
+    const chip = h('button', 'chip', `${t(label)} · ${count}`);
     chip.type = 'button';
     chip.setAttribute('aria-pressed', String(key === tab));
     chip.addEventListener('click', () => { tab = key; renderAll(); });
@@ -87,7 +88,7 @@ function entryCard(entry: AnimeEntry): HTMLElement {
   info.appendChild(h('div', 'name', entry.title)).setAttribute('title', entry.title);
 
   const meta = h('div', 'meta');
-  meta.appendChild(h('span', 'badge', STATUS_LABEL[entry.status]));
+  meta.appendChild(h('span', 'badge', t(STATUS_LABEL[entry.status])));
   meta.appendChild(h('span', '', entry.site === 'anilist' ? hostOf(entry.siteUrl) || 'AniList' : entry.site === 'crunchyroll' ? 'Crunchyroll' : entry.site));
   if (entry.totalEpisodes) meta.appendChild(h('span', '', `${entry.episodesWatched || 0}/${entry.totalEpisodes} eps`));
   else if (entry.episodesWatched) meta.appendChild(h('span', '', `${entry.episodesWatched} eps`));
@@ -106,7 +107,7 @@ function entryCard(entry: AnimeEntry): HTMLElement {
     meta.appendChild(link);
   }
   if (entry.next && entry.status === 'watching') {
-    const link = h('a', '', `▶ ${entry.next.never ? 'Começar' : 'Continuar'} ${entry.next.number ? `E${entry.next.number}` : 'episódio'}`);
+    const link = h('a', '', `▶ ${entry.next.never ? t('Começar') : t('Continuar')} ${entry.next.number ? `E${entry.next.number}` : t('episódio')}`);
     link.href = `${CR_ORIGIN}/watch/${entry.next.id}`;
     link.target = '_blank';
     link.rel = 'noopener';
@@ -124,14 +125,14 @@ function entryCard(entry: AnimeEntry): HTMLElement {
 
   const acts = h('div', 'acts');
   acts.append(
-    actionButton('Favoritar série', '★', Boolean(entry.favorite), () => update(entry, e => { e.favorite = !e.favorite; })),
-    actionButton('Assistindo', '▶', entry.status === 'watching', () => update(entry, e => { e.status = 'watching'; })),
-    actionButton('Assistir depois', '⏱', entry.status === 'watch_later', () => update(entry, e => { e.status = 'watch_later'; })),
-    actionButton('Marcar como assistida', '✓', entry.status === 'watched', () => update(entry, e => {
+    actionButton(t('Favoritar série'), '★', Boolean(entry.favorite), () => update(entry, e => { e.favorite = !e.favorite; })),
+    actionButton(t('Assistindo'), '▶', entry.status === 'watching', () => update(entry, e => { e.status = 'watching'; })),
+    actionButton(t('Assistir depois'), '⏱', entry.status === 'watch_later', () => update(entry, e => { e.status = 'watch_later'; })),
+    actionButton(t('Marcar como assistida'), '✓', entry.status === 'watched', () => update(entry, e => {
       e.status = 'watched';
       if (e.totalEpisodes) e.episodesWatched = e.totalEpisodes;
     })),
-    actionButton('Remover da biblioteca', '🗑', null, () => void remove(entry), true)
+    actionButton(t('Remover da biblioteca'), '🗑', null, () => void remove(entry), true)
   );
   info.appendChild(acts);
   card.appendChild(info);
@@ -151,9 +152,9 @@ function episodeCard(fav: EpisodeFav): HTMLElement {
   open.href = CR_ORIGIN + fav.url;
   open.target = '_blank';
   open.rel = 'noopener';
-  open.title = 'Abrir na Crunchyroll';
-  open.setAttribute('aria-label', 'Abrir na Crunchyroll');
-  acts.append(open, actionButton('Remover dos favoritos', '🗑', null, () => {
+  open.title = t('Abrir na Crunchyroll');
+  open.setAttribute('aria-label', t('Abrir na Crunchyroll'));
+  acts.append(open, actionButton(t('Remover dos favoritos'), '🗑', null, () => {
     void storage.removeEpisode(fav.id).then(renderAll);
   }, true));
   info.appendChild(acts);
@@ -167,13 +168,13 @@ function renderList(): void {
     const items = storage.listEpisodes().sort((a, b) => b.addedAt - a.addedAt);
     list.replaceChildren(...(items.length
       ? items.map(episodeCard)
-      : [h('p', 'empty', 'Nenhum episódio favorito. Use o coração na página de um episódio.')]));
+      : [h('p', 'empty', t('Nenhum episódio favorito. Use o coração na página de um episódio.'))]));
     return;
   }
   const items = storage.list().filter(entry => inTab(entry, tab)).sort((a, b) => b.lastUpdated - a.lastUpdated);
   list.replaceChildren(...(items.length
     ? items.map(entryCard)
-    : [h('p', 'empty', 'Nada por aqui ainda. Visite uma série na Crunchyroll ou use o painel acima em outro site.')]));
+    : [h('p', 'empty', t('Nada por aqui ainda. Visite uma série na Crunchyroll ou use o painel acima em outro site.'))]));
 }
 
 function renderAll(): void {
@@ -249,7 +250,7 @@ async function detectPage(): Promise<void> {
     ? hostOf(url)
     : players
       ? `${hostOf(url)} · ${players} player${players > 1 ? 's' : ''}`
-      : `${hostOf(url)} · player não encontrado`;
+      : t('{host} · player não encontrado', { host: hostOf(url) });
 
   if (detection) {
     const parsed = parseTitle([detection.probe.jsonLd, detection.probe.h1, detection.probe.og, detection.probe.title], detection.probe.url);
@@ -263,13 +264,13 @@ async function detectPage(): Promise<void> {
 async function runSearch(): Promise<void> {
   const query = ($('detSeries') as HTMLInputElement).value.trim();
   const status = $('detStatus');
-  if (!query) { status.textContent = 'Digite o nome da série.'; return; }
-  status.textContent = 'Buscando no AniList…';
+  if (!query) { status.textContent = t('Digite o nome da série.'); return; }
+  status.textContent = t('Buscando no AniList…');
   try {
     media = await searchAnime(query);
   } catch (error) {
     media = [];
-    status.textContent = `Não consegui consultar o AniList: ${(error as Error).message}`;
+    status.textContent = t('Não consegui consultar o AniList: {error}', { error: t((error as Error).message) });
     renderResults();
     return;
   }
@@ -285,7 +286,7 @@ async function runSearch(): Promise<void> {
   selected = rememberedIndex >= 0 ? rememberedIndex : Math.max(0, resolved.index);
   const fix = rememberedIndex < 0 ? resolved : null;
   if (fix?.episode && fix.episode !== typed) ($('detEp') as HTMLInputElement).value = String(fix.episode);
-  status.textContent = media.length ? fix?.note || '' : 'Nenhum resultado. Tente um nome mais curto.';
+  status.textContent = media.length ? fix?.note || '' : t('Nenhum resultado. Tente um nome mais curto.');
   renderResults();
 }
 
@@ -341,7 +342,7 @@ async function markWatched(): Promise<void> {
   const episode = Math.floor(Number(($('detEp') as HTMLInputElement).value));
   const status = $('detStatus');
   if (!picked) return;
-  if (!(episode > 0)) { status.textContent = 'Informe o número do episódio.'; return; }
+  if (!(episode > 0)) { status.textContent = t('Informe o número do episódio.'); return; }
 
   const entry = await upsertFromMedia(null, picked);
   entry.siteUrl = pageOrigin || entry.siteUrl;
@@ -359,13 +360,13 @@ async function markWatched(): Promise<void> {
     try {
       const result = await saveProgress(picked, episode, auth.token);
       message += result.saved
-        ? ` · AniList atualizado (${result.progress}${picked.episodes ? `/${picked.episodes}` : ''})`
-        : ` · AniList já está no ep. ${result.progress}`;
+        ? t(' · AniList atualizado ({progress}{total})', { progress: result.progress, total: picked.episodes ? `/${picked.episodes}` : '' })
+        : t(' · AniList já está no ep. {progress}', { progress: result.progress });
     } catch (error) {
-      message += ` · AniList falhou: ${(error as Error).message}`;
+      message += t(' · AniList falhou: {error}', { error: t((error as Error).message) });
     }
   } else {
-    message += ' · conecte o AniList nos ajustes para enviar o progresso';
+    message += t(' · conecte o AniList nos ajustes para enviar o progresso');
   }
   status.textContent = message;
 }
@@ -379,13 +380,13 @@ async function markPlanning(): Promise<void> {
   await storage.set(entry);
   await rememberMatch(picked);
   renderAll();
-  let message = `Guardado em Assistir depois: ${entry.title}`;
+  let message = t('Guardado em Assistir depois: {title}', { title: entry.title });
   const auth = await getAuth();
   if (auth) {
     try {
-      message += (await savePlanning(picked.id, auth.token)) ? ' · adicionado ao AniList (Planejo assistir)' : ' · já estava na sua lista do AniList';
+      message += (await savePlanning(picked.id, auth.token)) ? t(' · adicionado ao AniList (Planejo assistir)') : t(' · já estava na sua lista do AniList');
     } catch (error) {
-      message += ` · AniList falhou: ${(error as Error).message}`;
+      message += t(' · AniList falhou: {error}', { error: t((error as Error).message) });
     }
   }
   $('detStatus').textContent = message;
@@ -403,8 +404,8 @@ async function renderAniList(): Promise<void> {
   const auth = await getAuth();
   const configured = Boolean(clientId(settings.anilistClientId));
   $('anilistStatus').textContent = auth
-    ? `Conectado como ${auth.viewer.name}.`
-    : configured ? 'Não conectado.' : 'Login do AniList ainda não configurado.';
+    ? t('Conectado como {name}.', { name: auth.viewer.name })
+    : configured ? t('Não conectado.') : t('Login do AniList ainda não configurado.');
   $('anilistConnect').hidden = Boolean(auth);
   $('anilistDisconnect').hidden = !auth;
   ($('anilistConnect') as HTMLButtonElement).disabled = Boolean(auth) || !configured;
@@ -430,6 +431,13 @@ function setupSettings(): void {
     about.scrollIntoView({ block: 'start' });
   });
 
+  const language = $('langSelect') as HTMLSelectElement;
+  language.value = settings.language;
+  language.addEventListener('change', async () => {
+    await storage.updateSettings({ language: language.value as Settings['language'] });
+    window.location.reload();
+  });
+
   panel.querySelectorAll<HTMLElement>('.toggle').forEach(toggle => {
     paintToggle(toggle);
     const flip = async () => {
@@ -445,13 +453,13 @@ function setupSettings(): void {
 
   $('syncListsBtn').addEventListener('click', async () => {
     const status = $('syncListsStatus');
-    status.textContent = 'Sincronizando…';
+    status.textContent = t('Sincronizando…');
     const result = await pushListsFromPopup();
     status.textContent = !result
-      ? 'Abra a Crunchyroll (logado) em uma aba e tente de novo.'
+      ? t('Abra a Crunchyroll (logado) em uma aba e tente de novo.')
       : !result.loggedIn
-        ? 'Faça login na Crunchyroll para usar as Crunchylistas.'
-        : `Pronto: ${result.total} séries conferidas.`;
+        ? t('Faça login na Crunchyroll para usar as Crunchylistas.')
+        : t('Pronto: {total} séries conferidas.', { total: result.total });
   });
 
   const client = $('anilistClient') as HTMLInputElement;
@@ -463,15 +471,15 @@ function setupSettings(): void {
   ($('anilistRedirect') as HTMLInputElement).value = redirectUrl();
   $('anilistCopy').addEventListener('click', () => {
     void navigator.clipboard.writeText(redirectUrl());
-    $('anilistCopy').textContent = 'Copiado';
-    window.setTimeout(() => { $('anilistCopy').textContent = 'Copiar'; }, 1500);
+    $('anilistCopy').textContent = t('Copiado');
+    window.setTimeout(() => { $('anilistCopy').textContent = t('Copiar'); }, 1500);
   });
   $('anilistConnect').addEventListener('click', async () => {
-    $('anilistStatus').textContent = 'Abrindo o login do AniList…';
+    $('anilistStatus').textContent = t('Abrindo o login do AniList…');
     try {
       await connect(settings.anilistClientId);
     } catch (error) {
-      $('anilistStatus').textContent = `Não consegui conectar: ${(error as Error).message}`;
+      $('anilistStatus').textContent = t('Não consegui conectar: {error}', { error: t((error as Error).message) });
       return;
     }
     await renderAniList();
@@ -502,9 +510,9 @@ function setupSettings(): void {
     try {
       const count = await storage.importData(await file.text());
       renderAll();
-      $('detStatus').textContent = `${count} séries importadas.`;
+      $('detStatus').textContent = t('{count} séries importadas.', { count });
     } catch {
-      $('detStatus').textContent = 'Arquivo de backup inválido.';
+      $('detStatus').textContent = t('Arquivo de backup inválido.');
     }
     input.value = '';
   });
@@ -513,7 +521,7 @@ function setupSettings(): void {
 function checkForUpdate(): void {
   chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' }, result => {
     if (chrome.runtime.lastError || !result?.available) return;
-    $('updateText').textContent = `Atualização disponível: v${result.latest}`;
+    $('updateText').textContent = t('Atualização disponível: v{version}', { version: result.latest });
     $('updateNotice').hidden = false;
   });
 }
@@ -521,9 +529,11 @@ function checkForUpdate(): void {
 async function init(): Promise<void> {
   await storage.init();
   settings = await storage.getSettings();
+  setLanguage(settings.language);
   setupSettings();
   renderAll();
   checkForUpdate();
+  translateDom(document.body);
 
   $('detSearch').addEventListener('click', () => void runSearch());
   ($('detSeries') as HTMLInputElement).addEventListener('keydown', event => { if (event.key === 'Enter') void runSearch(); });

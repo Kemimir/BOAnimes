@@ -5,6 +5,7 @@ import { runLite } from './lite';
 import { ensureRowArrows } from './rows';
 import { applyPlayer, buildPlayerButton } from './player';
 import { onSkipped } from './autoskip';
+import { t } from '../shared/i18n';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
@@ -61,11 +62,12 @@ const LABELS: Record<ButtonKey, [string, string]> = {
   watched: ['Marcar como assistida', 'Assistida']
 };
 
+// Getters: o idioma só é conhecido depois que as configurações carregam.
 const STATUS_NAMES: Record<AnimeStatus, string> = {
-  favorite: 'Favorita',
-  watch_later: 'Assistir depois',
-  watching: 'Assistindo',
-  watched: 'Assistida'
+  get favorite() { return t('Favorita'); },
+  get watch_later() { return t('Assistir depois'); },
+  get watching() { return t('Assistindo'); },
+  get watched() { return t('Assistida'); }
 };
 
 type PageKind = 'series' | 'watch' | 'other';
@@ -117,7 +119,7 @@ function paintButton(button: HTMLElement, buttonKey: ButtonKey, active: boolean)
   if (button.dataset.active === state) return; // nada mudou: não toca no DOM
   button.dataset.active = state;
   button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[buttonKey][active ? 1 : 0]}"/></svg>`;
-  const label = LABELS[buttonKey][active ? 1 : 0];
+  const label = t(LABELS[buttonKey][active ? 1 : 0]);
   button.title = label;
   button.setAttribute('aria-label', label);
   button.setAttribute('aria-pressed', String(active));
@@ -162,8 +164,8 @@ async function pushToCrunchylists(entry: AnimeEntry): Promise<void> {
 
 setListEventHandler(event => {
   showToast(event.kind === 'created'
-    ? `Crunchylista "${event.title}" criada`
-    : `Não foi possível usar a Crunchylista "${event.title}": ${event.reason}`);
+    ? t('Crunchylista "{title}" criada', { title: event.title })
+    : t('Não foi possível usar a Crunchylista "{title}": {reason}', { title: event.title, reason: event.reason ?? '' }));
 });
 
 /** Sincroniza todas as séries guardadas com as Crunchylistas (botão do popup). */
@@ -178,9 +180,9 @@ export async function syncAllLists(): Promise<{ done: number; total: number; log
       await storage.set(entry);
     }
     done += 1;
-    if (done % 5 === 0) showToast(`Sincronizando Crunchylistas… ${done}/${entries.length}`);
+    if (done % 5 === 0) showToast(t('Sincronizando Crunchylistas… {done}/{total}', { done, total: entries.length }));
   }
-  showToast(`Crunchylistas atualizadas (${entries.length} séries)`);
+  showToast(t('Crunchylistas atualizadas ({count} séries)', { count: entries.length }));
   return { done, total: entries.length, loggedIn: true };
 }
 
@@ -221,11 +223,11 @@ function paintGroup(): void {
     paintButton(button, buttonKey, active);
   });
   const watched = entry?.episodesWatched || 0;
-  const text = entry?.totalEpisodes ? `${watched}/${entry.totalEpisodes} ep.` : watched ? `${watched} ep.` : '';
+  const text = entry?.totalEpisodes ? t('{watched}/{total} ep.', { watched, total: entry.totalEpisodes }) : watched ? t('{watched} ep.', { watched }) : '';
   const progress = group.querySelector<HTMLElement>('.boa-progress');
   if (progress && progress.textContent !== text) {
     progress.textContent = text;
-    progress.title = text ? 'Episódios assistidos nesta conta' : '';
+    progress.title = text ? t('Episódios assistidos nesta conta') : '';
   }
 }
 
@@ -405,10 +407,10 @@ async function toggleEpisodeFav(): Promise<void> {
   if (!episode) return;
   if (storage.peekEpisode(episode.id)) {
     await storage.removeEpisode(episode.id);
-    showToast('Episódio removido dos favoritos');
+    showToast(t('Episódio removido dos favoritos'));
   } else {
     await storage.setEpisode({ ...episode, addedAt: Date.now() });
-    showToast('Episódio adicionado aos favoritos');
+    showToast(t('Episódio adicionado aos favoritos'));
   }
   repaintAll();
 }
@@ -449,7 +451,7 @@ async function applyCardStatus(card: Element, which: AnimeStatus): Promise<void>
   if (which === 'favorite') entry.favorite = !entry.favorite;
   else entry.status = which;
   await commit(entry);
-  showToast(which === 'favorite' ? (entry.favorite ? 'Série adicionada às favoritas' : 'Série removida das favoritas') : `Status: ${STATUS_NAMES[which]}`);
+  showToast(which === 'favorite' ? (entry.favorite ? t('Série adicionada às favoritas') : t('Série removida das favoritas')) : t('Status: {status}', { status: STATUS_NAMES[which] }));
 }
 
 const detailHooks: DetailHooks = {
@@ -468,8 +470,8 @@ function onSeriesHover(event: Event): void {
   if (!card || card.querySelector(':scope > .boa-detail-btn')) return;
   const button = element('button', 'boa-detail-btn');
   button.type = 'button';
-  button.title = 'Mais detalhes';
-  button.setAttribute('aria-label', 'Mais detalhes');
+  button.title = t('Mais detalhes');
+  button.setAttribute('aria-label', t('Mais detalhes'));
   button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${CHEVRON_UP}"/></svg>`;
   button.addEventListener('click', clickEvent => {
     if (!clickEvent.isTrusted) return;
@@ -539,7 +541,7 @@ function paintProgressBar(poster: HTMLElement, entry: AnimeEntry | null): void {
   if (fill.dataset.p !== percent) {
     fill.dataset.p = percent;
     fill.style.width = `${percent}%`;
-    bar.title = `${watched}/${total} episódios`;
+    bar.title = t('{watched}/{total} episódios', { watched, total });
   }
 }
 
@@ -759,7 +761,7 @@ async function importHistory(): Promise<void> {
   if (!touched.length) return;
   repaintAll();
   for (const entry of promoted) void pushToCrunchylists(entry);
-  if (added) showToast(`${added} ${added === 1 ? 'série do seu histórico entrou' : 'séries do seu histórico entraram'} no BOAnimes`);
+  if (added) showToast(t(added === 1 ? '{count} série do seu histórico entrou no BOAnimes' : '{count} séries do seu histórico entraram no BOAnimes', { count: added }));
 }
 
 /** Atualiza o "próximo episódio" das séries em andamento cujo dado está velho. */
@@ -805,10 +807,10 @@ function continueLabel(entry: AnimeEntry): string {
   const next = entry.next;
   const parts: string[] = [];
   if (next) {
-    const episode = next.number ? `E${next.number}` : 'episódio';
-    if (next.never) parts.push(`Começar ${episode}`);
-    else if (next.playhead >= 30 && next.durationMs) parts.push(`Continuar ${episode} · ${clock(next.playhead)}/${clock(next.durationMs / 1000)}`);
-    else parts.push(`Próximo: ${episode}`);
+    const episode = next.number ? `E${next.number}` : t('episódio');
+    if (next.never) parts.push(t('Começar {ep}', { ep: episode }));
+    else if (next.playhead >= 30 && next.durationMs) parts.push(t('Continuar {ep} · {at}/{total}', { ep: episode, at: clock(next.playhead), total: clock(next.durationMs / 1000) }));
+    else parts.push(t('Próximo: {ep}', { ep: episode }));
   }
   if (entry.totalEpisodes) parts.push(`${entry.episodesWatched || 0}/${entry.totalEpisodes}`);
   return parts.join(' · ') || STATUS_NAMES[entry.status];
@@ -840,8 +842,8 @@ function mountQuickAccess(): void {
   // As classes nativas dão ao botão o mesmo tamanho e hover dos vizinhos.
   const button = element('button', 'boa-quick-btn erc-header-tile state-icon-only');
   button.type = 'button';
-  button.title = 'Minha lista BOAnimes';
-  button.setAttribute('aria-label', 'Minha lista BOAnimes');
+  button.title = t('Minha lista BOAnimes');
+  button.setAttribute('aria-label', t('Minha lista BOAnimes'));
   button.setAttribute('aria-expanded', 'false');
   button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="${QUICK_ICON}"/></svg><span class="boa-quick-count" hidden></span>`;
   button.addEventListener('click', event => {
@@ -943,7 +945,7 @@ function renderQuick(): void {
   const tabs = element('div', 'boa-quick-tabs');
   tabs.setAttribute('role', 'tablist');
   for (const { key: tabKey, label } of QUICK_TABS) {
-    const tab = element('button', 'boa-quick-tab', `${label} · ${inTab(tabKey).length}`);
+    const tab = element('button', 'boa-quick-tab', `${t(label)} · ${inTab(tabKey).length}`);
     tab.type = 'button';
     tab.dataset.tab = tabKey;
     tab.setAttribute('role', 'tab');
@@ -954,12 +956,12 @@ function renderQuick(): void {
   const list = element('div', 'boa-quick-list');
   if (quickTab === 'episodes') {
     const items = [...episodes].sort((a, b) => b.addedAt - a.addedAt).slice(0, 40);
-    if (!items.length) list.appendChild(element('p', 'boa-quick-empty', QUICK_EMPTY.episodes));
+    if (!items.length) list.appendChild(element('p', 'boa-quick-empty', t(QUICK_EMPTY.episodes)));
     for (const fav of items) list.appendChild(quickItem(fav.url, fav.title, fav.seriesTitle, fav.thumb));
   } else {
     const tabStatus: AnimeStatus = quickTab;
     const items = series.filter(entry => isActive(entry, tabStatus)).sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, 40);
-    if (!items.length) list.appendChild(element('p', 'boa-quick-empty', QUICK_EMPTY[quickTab]));
+    if (!items.length) list.appendChild(element('p', 'boa-quick-empty', t(QUICK_EMPTY[quickTab])));
     for (const entry of items) {
       if (quickTab === 'watching') {
         const href = entry.next ? `${prefix}/watch/${entry.next.id}` : `${prefix}/series/${entry.id}`;
@@ -967,14 +969,14 @@ function renderQuick(): void {
         continue;
       }
       const watched = entry.episodesWatched || 0;
-      const detail = entry.totalEpisodes ? `${watched}/${entry.totalEpisodes} episódios` : watched ? `${watched} episódio(s)` : STATUS_NAMES[entry.status];
+      const detail = entry.totalEpisodes ? t('{watched}/{total} episódios', { watched, total: entry.totalEpisodes }) : watched ? t('{count} episódio(s)', { count: watched }) : STATUS_NAMES[entry.status];
       list.appendChild(quickItem(`${prefix}/series/${entry.id}`, entry.title, detail, entry.coverUrl));
     }
   }
   const foot = element('div', 'boa-quick-foot');
   const settings = storage.peekSettings();
   for (const [setting, label] of [['compactGrid', 'Fileiras compactas'], ['widePlayer', 'Player largo']] as const) {
-    const toggle = element('button', 'boa-quick-switch', label);
+    const toggle = element('button', 'boa-quick-switch', t(label));
     toggle.type = 'button';
     toggle.dataset.setting = setting;
     toggle.setAttribute('role', 'switch');
@@ -1037,7 +1039,7 @@ function checkHealth(): void {
     (document.querySelector('.dynamic-feed-wrapper [data-t^="series-card"]') && !document.querySelector('[data-boa]'));
   if (!document.querySelector('.boa-quick-btn,[class*="boa-quick"]') && !missing) return;
   healthDone = true;
-  if (missing) showToast('A Crunchyroll mudou parte da página: alguns recursos do BOAnimes podem não aparecer.');
+  if (missing) showToast(t('A Crunchyroll mudou parte da página: alguns recursos do BOAnimes podem não aparecer.'));
 }
 
 function tick(): void {
@@ -1082,8 +1084,8 @@ export async function updateStatus(status: AnimeStatus): Promise<void> {
   else entry.status = status;
   await commit(entry);
   showToast(status === 'favorite'
-    ? (entry.favorite ? 'Série adicionada às favoritas' : 'Série removida das favoritas')
-    : `Status: ${STATUS_NAMES[status]}`);
+    ? (entry.favorite ? t('Série adicionada às favoritas') : t('Série removida das favoritas'))
+    : t('Status: {status}', { status: STATUS_NAMES[status] }));
 }
 
 export async function incrementEpisode(): Promise<void> {
@@ -1093,7 +1095,7 @@ export async function incrementEpisode(): Promise<void> {
   if (entry.totalEpisodes && entry.episodesWatched >= entry.totalEpisodes) entry.status = 'watched';
   else if (entry.status === 'watch_later') entry.status = 'watching';
   await commit(entry);
-  showToast(`Progresso: ${entry.episodesWatched} episódio(s)`);
+  showToast(t('Progresso: {count} episódio(s)', { count: entry.episodesWatched }));
 }
 
 export function toggleCurrentEpisodeFav(): Promise<void> {

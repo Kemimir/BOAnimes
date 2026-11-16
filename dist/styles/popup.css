@@ -114,3 +114,5 @@ input:focus-visible, button:focus-visible, .toggle:focus-visible, a:focus-visibl
 @media (prefers-reduced-motion: reduce) {
   .toggle, .toggle::after { transition: none; }
 }
+
+.select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--txt); font: inherit; }

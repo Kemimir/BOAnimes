@@ -1,3 +1,4 @@
+import { t } from '../shared/i18n';
 import type { AnimeStatus } from '../shared/types';
 
 /**
@@ -83,7 +84,7 @@ export function openDetail(card: Element, hooks: DetailHooks): void {
 
   const box = make('div', 'boa-detail');
   box.setAttribute('role', 'dialog');
-  box.setAttribute('aria-label', `Detalhes de ${title}`);
+  box.setAttribute('aria-label', t('Detalhes de {title}', { title }));
 
   if (cover) {
     const picture = make('img', 'boa-detail-cover');
@@ -98,15 +99,15 @@ export function openDetail(card: Element, hooks: DetailHooks): void {
   body.appendChild(make('h3', 'boa-detail-title', title));
   const facts = [rating, tags, meta].filter(Boolean).join('  ·  ');
   if (facts) body.appendChild(make('p', 'boa-detail-facts', facts));
-  body.appendChild(make('p', 'boa-detail-text', description || 'Sem descrição disponível no momento.'));
+  body.appendChild(make('p', 'boa-detail-text', description || t('Sem descrição disponível no momento.')));
 
   const row = make('div', 'boa-detail-actions');
-  const open = make('a', 'boa-detail-open', '▶ Ver série');
+  const open = make('a', 'boa-detail-open', t('▶ Ver série'));
   open.href = link.getAttribute('href') || '#';
   row.appendChild(open);
   const buttons = new Map<AnimeStatus, HTMLButtonElement>();
   for (const { which, label } of ACTIONS) {
-    const button = make('button', 'boa-detail-pill', label);
+    const button = make('button', 'boa-detail-pill', t(label));
     button.type = 'button';
     button.addEventListener('click', event => {
       event.preventDefault();
