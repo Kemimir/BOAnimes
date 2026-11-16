@@ -139,3 +139,52 @@ html:not(.boa-theme-off) [class*="hero-background--"],
 html:not(.boa-theme-off) [data-t="series-hero-background"] {
   top: -60px;
 }
+
+/* ----- Aviso da conta (ex.: assinatura): cartão pequeno no canto ----- */
+/* O aviso continua visível e com o X nativo; só deixa de ocupar a largura toda
+   e de cobrir o topo da página. Nada aqui o esconde. */
+html:not(.boa-theme-off) div[class*="broadcast-message--"] {
+  left: auto;
+  right: 12px;
+  top: 64px;
+  width: auto;
+  max-width: min(340px, calc(100vw - 24px));
+  min-height: 0;
+  height: auto;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 6px 8px 12px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+}
+
+html:not(.boa-theme-off) div[class*="broadcast-message--"] > div:first-child {
+  flex: 1 1 auto;
+  padding: 0;
+  text-align: left;
+}
+
+html:not(.boa-theme-off) div[class*="broadcast-message--"] p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+html:not(.boa-theme-off) div[class*="broadcast-message__close--"] {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+}
+
+html:not(.boa-theme-off) div[class*="broadcast-message__close--"] svg {
+  width: 16px;
+  height: 16px;
+}
