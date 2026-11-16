@@ -537,6 +537,7 @@ function repaintAll(): void {
   if (page.entry) page.entry = storage.peek(key(page.entry.id)) || page.entry;
   paintGroup();
   renderQuick();
+  updateQuickBadge();
 }
 
 /* ---------- detecção pelo histórico da conta ---------- */
@@ -653,7 +654,7 @@ function continueLabel(entry: AnimeEntry): string {
 
 /* ---------- acesso rápido (header) ---------- */
 
-const QUICK_ICON = 'M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z';
+const QUICK_ICON = 'M6 2h12a1 1 0 0 1 1 1v19l-7-4.5L5 22V3a1 1 0 0 1 1-1zm4 4.5v7l5.5-3.5L10 6.5z';
 type QuickTab = 'watching' | 'watch_later' | 'favorite' | 'episodes';
 const QUICK_TABS: { key: QuickTab; label: string }[] = [
   { key: 'watching', label: 'Assistindo' },
@@ -680,7 +681,7 @@ function mountQuickAccess(): void {
   button.title = 'Minha lista BOAnimes';
   button.setAttribute('aria-label', 'Minha lista BOAnimes');
   button.setAttribute('aria-expanded', 'false');
-  button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${QUICK_ICON}"/></svg>`;
+  button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="${QUICK_ICON}"/></svg><span class="boa-quick-count" hidden></span>`;
   button.addEventListener('click', event => {
     event.stopPropagation();
     toggleQuick(wrap, button);
@@ -688,6 +689,17 @@ function mountQuickAccess(): void {
   wrap.appendChild(button);
   actions.insertBefore(wrap, actions.firstChild);
   quickPanel = null;
+  updateQuickBadge();
+}
+
+/** Número de séries em andamento, no cantinho do botão. */
+function updateQuickBadge(): void {
+  const badge = document.querySelector<HTMLElement>('.boa-quick-count');
+  if (!badge) return;
+  const count = storage.list().filter(entry => entry.site === SITE && entry.status === 'watching').length;
+  const text = count > 9 ? '9+' : String(count);
+  badge.hidden = count === 0;
+  if (badge.textContent !== text) badge.textContent = text;
 }
 
 function toggleQuick(wrap: HTMLElement, button: HTMLElement): void {
@@ -699,6 +711,8 @@ function toggleQuick(wrap: HTMLElement, button: HTMLElement): void {
   quickPanel.addEventListener('click', event => {
     const tab = (event.target as Element).closest<HTMLElement>('.boa-quick-tab');
     if (!tab) return;
+    // O painel é redesenhado e o botão clicado sai do DOM; sem isto o ouvinte global acharia que o clique foi fora.
+    event.stopPropagation();
     quickTab = tab.dataset.tab as QuickTab;
     renderQuick();
   });
@@ -720,7 +734,9 @@ function closeQuick(): void {
 }
 
 function onQuickOutside(event: MouseEvent): void {
-  if (!(event.target as Element).closest('.boa-quick')) closeQuick();
+  const wrap = quickPanel?.parentElement;
+  if (wrap && event.composedPath().includes(wrap)) return;
+  closeQuick();
 }
 
 function onQuickKey(event: KeyboardEvent): void {
