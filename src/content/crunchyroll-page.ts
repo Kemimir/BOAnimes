@@ -620,8 +620,8 @@ async function refreshStaleNext(): Promise<void> {
   renderQuick();
 
   // Contagens antigas (de versões que contavam pela tela) são refeitas aos poucos:
-  // no máximo duas séries por abertura do painel, e cada uma só uma vez por dia.
-  const outdated = stale.filter(entry => Date.now() - (entry.progressAt || 0) > PROGRESS_TTL_MS).slice(0, 2);
+  // no máximo três séries por abertura do painel, e cada uma só uma vez por dia.
+  const outdated = stale.filter(entry => Date.now() - (entry.progressAt || 0) > PROGRESS_TTL_MS).slice(0, 3);
   for (const entry of outdated) {
     const progress = await fetchSeriesProgress(entry.id);
     if (progress) applyProgress(entry, progress);

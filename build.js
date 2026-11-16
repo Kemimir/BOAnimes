@@ -66,9 +66,14 @@ async function buildAll() {
       });
     }
     
-    // Create placeholder icons
+    // Ícones da extensão (PNG: o Chrome não aceita SVG no manifest)
     const iconsDir = join(outDir, 'icons');
     if (!existsSync(iconsDir)) mkdirSync(iconsDir, { recursive: true });
+    if (existsSync('public/icons')) {
+      readdirSync('public/icons').filter(f => f.endsWith('.png')).forEach(f => {
+        copyFileSync(join('public/icons', f), join(iconsDir, f));
+      });
+    }
     
     console.log('[BOAnimes] Build complete:', new Date().toLocaleTimeString());
   } catch (e) {

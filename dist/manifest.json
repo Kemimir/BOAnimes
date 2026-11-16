@@ -1,21 +1,23 @@
 {
   "manifest_version": 3,
   "name": "BOAnimes - By Kemir",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Melhora a Crunchyroll e acompanha seus animes: favoritos, episódios vistos, Crunchylistas e AniList",
   "author": "Kemir",
   "icons": {
-    "16": "icons/icon.svg",
-    "48": "icons/icon.svg",
-    "128": "icons/icon.svg"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
   "action": {
     "default_title": "BOAnimes",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon.svg",
-      "48": "icons/icon.svg",
-      "128": "icons/icon.svg"
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
     }
   },
   "permissions": ["storage", "activeTab", "scripting", "contextMenus", "identity"],

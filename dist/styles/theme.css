@@ -130,3 +130,12 @@ html:not(.boa-theme-off) .cr-footer-seo-section {
   content-visibility: auto;
   contain-intrinsic-size: auto 600px;
 }
+
+/* ----- Hero até o topo: a imagem sobe para trás da barra flutuante ----- */
+/* O conteúdo não se move: a margem negativa e o respiro interno têm o mesmo tamanho
+   do cabeçalho nativo (60px), então só o fundo ocupa a faixa que ficava preta. */
+html:not(.boa-theme-off) div[class*="hero-carousel--"],
+html:not(.boa-theme-off) [data-t="series-hero-container"] {
+  margin-top: -60px;
+  padding-top: 60px;
+}
