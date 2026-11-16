@@ -1053,6 +1053,15 @@ function syncScrolledFlag(): void {
 
 function tick(): void {
   tickTimer = 0;
+  if (!document.hidden && !storage.peekSettings().enabled) {
+    // Desligada: só mantém as marcas do <html>, devolve imagens e fecha o que estiver aberto.
+    guarded(() => applyFlags(storage.peekSettings()));
+    guarded(() => runLite(false));
+    guarded(closeDetail);
+    guarded(applyPlayer);
+    tickTimer = window.setTimeout(tick, TICK_IDLE_MS);
+    return;
+  }
   if (!document.hidden) {
     // Cada parte roda isolada: um erro em uma não pode parar o ciclo nem as outras.
     guarded(() => applyFlags(storage.peekSettings()));

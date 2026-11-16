@@ -114,6 +114,9 @@ add('Abra a Crunchyroll (logado) em uma aba e tente de novo.', 'Open Crunchyroll
 add('Faça login na Crunchyroll para usar as Crunchylistas.', 'Log in to Crunchyroll to use Crunchylists.', 'Inicia sesión en Crunchyroll para usar las Crunchylists.');
 add('Pronto: {total} séries conferidas.', 'Done: {total} series checked.', 'Listo: {total} series revisadas.');
 add('Mais', 'More', 'Más');
+add('Extensão ligada', 'Extension on', 'Extensión activada');
+add('Extensão desligada', 'Extension off', 'Extensión desactivada');
+add('Ligar ou desligar a extensão', 'Turn the extension on or off', 'Activar o desactivar la extensión');
 add('Login cancelado.', 'Login cancelled.', 'Inicio de sesión cancelado.');
 add('Copiado', 'Copied', 'Copiado');
 add('Copiar', 'Copy', 'Copiar');

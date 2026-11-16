@@ -90,6 +90,8 @@ export interface Settings {
   aboutSeen: boolean;
   /** Idioma da interface: automático (pelo site/navegador), português, inglês ou espanhol. */
   language: 'auto' | 'pt' | 'en' | 'es';
+  /** Chave geral: desligada, a extensão deixa a Crunchyroll como o site é. */
+  enabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -110,5 +112,6 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSkipDelay: 3,
   playerKeys: true,
   aboutSeen: false,
-  language: 'auto'
+  language: 'auto',
+  enabled: true
 };

@@ -116,3 +116,9 @@ input:focus-visible, button:focus-visible, .toggle:focus-visible, a:focus-visibl
 }
 
 .select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--txt); font: inherit; }
+
+/* Chave geral no topo */
+.master { display: flex; align-items: center; gap: 8px; }
+.master-label { color: var(--txt2); font-size: 11px; font-weight: 600; }
+body.is-off .master-label { color: #ff8a8a; }
+body.is-off main, body.is-off .chips, body.is-off .panel, body.is-off .settings { opacity: .45; }

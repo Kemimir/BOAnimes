@@ -411,7 +411,28 @@ async function renderAniList(): Promise<void> {
   ($('anilistConnect') as HTMLButtonElement).disabled = Boolean(auth) || !configured;
 }
 
+function paintMaster(): void {
+  const master = $('masterToggle');
+  master.setAttribute('aria-checked', String(settings.enabled));
+  $('masterLabel').textContent = t(settings.enabled ? 'Extensão ligada' : 'Extensão desligada');
+  document.body.classList.toggle('is-off', !settings.enabled);
+}
+
+function setupMaster(): void {
+  const master = $('masterToggle');
+  paintMaster();
+  const flip = async (): Promise<void> => {
+    settings = await storage.updateSettings({ enabled: !settings.enabled });
+    paintMaster();
+  };
+  master.addEventListener('click', () => void flip());
+  master.addEventListener('keydown', event => {
+    if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); void flip(); }
+  });
+}
+
 function setupSettings(): void {
+  setupMaster();
   const panel = $('settings');
   $('settingsBtn').addEventListener('click', () => {
     panel.hidden = !panel.hidden;

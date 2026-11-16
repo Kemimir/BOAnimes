@@ -8,7 +8,7 @@
  */
 import { Settings } from '../shared/types';
 
-type Flags = Partial<Pick<Settings, 'themeEnabled' | 'compactGrid' | 'widePlayer' | 'liteMode'>>;
+type Flags = Partial<Pick<Settings, 'themeEnabled' | 'compactGrid' | 'widePlayer' | 'liteMode' | 'enabled'>>;
 
 let debug = new Set<string>();
 try {
@@ -23,20 +23,24 @@ let current: Flags | undefined;
 
 function write(): void {
   const root = document.documentElement;
-  const paused = isPaused();
+  const disabled = current?.enabled === false;
+  const paused = isPaused() || disabled;
   const classes = root.classList;
   const wanted: Array<[string, boolean]> = [
     ['boa-theme-off', paused || current?.themeEnabled === false],
     ['boa-grid-off', paused || debug.has('grid') || current?.compactGrid === false],
-    ['boa-wide-player', current?.widePlayer === true],
+    ['boa-wide-player', !disabled && current?.widePlayer === true],
+    ['boa-disabled', disabled],
     ['boa-nocv', debug.has('nocv')]
   ];
   for (const [name, on] of wanted) if (classes.contains(name) !== on) classes.toggle(name, on);
   const data: Array<[string, string | null]> = [
-    ['boaOff', paused ? '1' : null],
+    // boaOff só vem da chave de diagnóstico: a chave geral não impede a extensão de iniciar,
+    // para ela poder ser religada sem recarregar a página.
+    ['boaOff', isPaused() ? '1' : null],
     ['boaNoJs', debug.has('nojs') ? '1' : null],
     ['boaNoLite', debug.has('nolite') ? '1' : null],
-    ['boaNoDefer', current?.liteMode === false ? '1' : '0']
+    ['boaNoDefer', disabled || current?.liteMode === false ? '1' : '0']
   ];
   for (const [name, value] of data) {
     if (value === null) {

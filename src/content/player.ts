@@ -96,6 +96,12 @@ export function applyPlayer(): void {
   const video = document.querySelector<HTMLVideoElement>('video');
   if (!video) return;
   const settings = storage.peekSettings();
+  if (!settings.enabled) {
+    // Extensão desligada: devolve imagem e som ao que o site entrega e não pula nada.
+    if (video.style.filter) video.style.filter = '';
+    if (chains.has(video)) applyVolume(video, 100);
+    return;
+  }
   const filter = buildFilter(settings);
   if (video.style.filter !== filter) video.style.filter = filter;
   applyVolume(video, settings.playerGain);

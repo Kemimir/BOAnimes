@@ -802,3 +802,9 @@ html.boa-theme-off .boa-more {
 html.boa-theme-off .boa-account-panel {
   display: none;
 }
+
+/* Chave geral desligada: toda a interface da extensão some (o marcador boa-keep é só uma
+   etiqueta num item do próprio site e fica). O site volta ao que era. */
+html.boa-disabled :is([class^="boa-"], [class*=" boa-"]):not(.boa-keep) {
+  display: none !important;
+}

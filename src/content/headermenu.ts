@@ -171,6 +171,8 @@ export function mountAccountMenu(): void {
   };
   // Em fase de captura: o clique não chega ao menu nativo, que nem chega a abrir.
   tile.addEventListener('click', event => {
+    // Extensão desligada: o menu nativo do site funciona como sempre.
+    if (document.documentElement.classList.contains('boa-disabled')) return;
     event.preventDefault();
     event.stopPropagation();
     if (!panel.hidden) {

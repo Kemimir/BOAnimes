@@ -18,7 +18,7 @@ async function start(): Promise<void> {
 }
 
 document.addEventListener('keydown', event => {
-  if (!event.ctrlKey || !event.shiftKey || !crunchyroll.getCurrentEntry()) return;
+  if (!event.ctrlKey || !event.shiftKey || !storage.peekSettings().enabled || !crunchyroll.getCurrentEntry()) return;
   const key = event.key.toLowerCase();
   const onSeries = /\/series\//i.test(window.location.pathname);
   if (key === 'f' && onSeries) {
@@ -38,7 +38,8 @@ document.addEventListener('keydown', event => {
 
 document.addEventListener('keydown', event => {
   if (event.ctrlKey || event.altKey || event.metaKey || !/\/watch\//i.test(window.location.pathname)) return;
-  if (!storage.peekSettings().playerKeys) return;
+  const current = storage.peekSettings();
+  if (!current.enabled || !current.playerKeys) return;
   const target = event.target as HTMLElement | null;
   if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
   const key = event.key.toLowerCase();
