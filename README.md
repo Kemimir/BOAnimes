@@ -4,6 +4,10 @@ Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora 
 
 > Projeto de fã, **não oficial**. Não é afiliado, aprovado nem mantido pela Crunchyroll. Veja [Transparência e termos de uso](#transparência-e-termos-de-uso).
 
+![BOAnimes overview](docs/overview.png)
+
+![Player tools and settings](docs/player-and-settings.png)
+
 ## O que ela faz
 
 **Visual**
