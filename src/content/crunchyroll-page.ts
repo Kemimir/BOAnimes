@@ -9,13 +9,12 @@ import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setLi
  *
  * A Crunchyroll é uma SPA em React: a página nunca recarrega entre home, série
  * e episódio, e o DOM é reconstruído o tempo todo. Por isso tudo passa por um
- * único `sync()` idempotente, disparado por um MutationObserver com throttle.
+ * único ciclo `tick()` idempotente e barato (sem MutationObserver; veja `tick`).
  * Cada passada faz poucas consultas ancoradas em `data-t` e só escreve no DOM
  * quando falta algo, então as nossas inserções não realimentam o observer.
  */
 
 const SITE = 'crunchyroll';
-const SYNC_DELAY = 300;
 const SERIES_TABS: AnimeStatus[] = ['favorite', 'watch_later', 'watching', 'watched'];
 
 /** Chave de um botão do grupo: os quatro estados da série mais o episódio favorito. */
@@ -83,7 +82,6 @@ const freshPage = (kind: PageKind): PageState => ({ kind, entry: null, group: nu
 
 let lastPath = '';
 let page: PageState = freshPage('other');
-let syncTimer = 0;
 let lastEndedPath = '';
 
 const key = (id: string) => `${SITE}:${id}`;
@@ -645,55 +643,19 @@ function decorateFooter(footer: Element): void {
 const CARD_SELECTOR = '[data-t^="series-card"]:not([data-boa])';
 const FOOTER_SELECTOR = '[data-t="hover-component"] [class*="hover__footer--"]:not([data-boa])';
 
-/** Decora só o que está dentro de `root` (e ele mesmo), nunca a página inteira. */
-function decorateIn(root: Element | Document): void {
-  if (root instanceof Element) {
-    if (root.matches(CARD_SELECTOR)) decorateCard(root);
-    if (root.matches(FOOTER_SELECTOR)) decorateFooter(root);
-  }
-  root.querySelectorAll(CARD_SELECTOR).forEach(decorateCard);
+const BATCH_LIMIT = 60;
+
+/**
+ * Decora no máximo `BATCH_LIMIT` cards e faixas de botões ainda não marcados. Devolve
+ * `true` se sobrou trabalho, para o próximo ciclo continuar.
+ */
+function decorateIn(root: Element | Document): boolean {
+  const cards = root.querySelectorAll(CARD_SELECTOR);
+  const footers = root.querySelectorAll(FOOTER_SELECTOR);
+  for (let index = 0; index < Math.min(cards.length, BATCH_LIMIT); index += 1) decorateCard(cards[index]);
   // O painel de hover pode ser montado depois do card, então é tratado à parte.
-  root.querySelectorAll(FOOTER_SELECTOR).forEach(decorateFooter);
-}
-
-// Nós adicionados ao DOM esperando decoração. A fila é esvaziada em tempo ocioso,
-// em fatias, para a rolagem com carregamento infinito nunca ficar presa na extensão.
-const addedQueue = new Set<Element>();
-let decorateHandle = 0;
-const SLICE_BUDGET_MS = 8;
-
-function runDecorateSlice(deadline?: IdleDeadline): void {
-  decorateHandle = 0;
-  const started = performance.now();
-  for (const node of addedQueue) {
-    addedQueue.delete(node);
-    if (node.isConnected) decorateIn(node);
-    const spent = performance.now() - started;
-    const budgetLeft = deadline ? deadline.timeRemaining() > 2 : spent < SLICE_BUDGET_MS;
-    if (!budgetLeft) break;
-  }
-  if (addedQueue.size) scheduleDecorate();
-}
-
-function scheduleDecorate(): void {
-  if (decorateHandle) return;
-  decorateHandle = typeof requestIdleCallback === 'function'
-    ? requestIdleCallback(runDecorateSlice, { timeout: 400 })
-    : window.setTimeout(runDecorateSlice, 60);
-}
-
-function onMutations(records: MutationRecord[]): void {
-  for (const record of records) {
-    record.addedNodes.forEach(node => {
-      if (node.nodeType !== 1) return;
-      const element = node as Element;
-      // As inserções da própria extensão não precisam ser reprocessadas.
-      if (typeof element.className === 'string' && element.className.startsWith('boa-')) return;
-      addedQueue.add(element);
-    });
-  }
-  if (addedQueue.size) scheduleDecorate();
-  scheduleSync();
+  for (let index = 0; index < Math.min(footers.length, BATCH_LIMIT); index += 1) decorateFooter(footers[index]);
+  return cards.length > BATCH_LIMIT || footers.length > BATCH_LIMIT;
 }
 
 function repaintAll(): void {
@@ -996,28 +958,50 @@ function renderQuick(): void {
 /* ---------- ciclo ---------- */
 
 function sync(): void {
-  syncTimer = 0;
   if (window.location.pathname !== lastPath) {
     lastPath = window.location.pathname;
     page.group?.remove();
     closeDetail();
     page = freshPage(pageKind());
-    decorateIn(document);
   }
   mountQuickAccess();
   if (page.kind === 'series') syncSeries();
   else if (page.kind === 'watch') syncWatch();
 }
 
-function scheduleSync(): void {
-  if (!syncTimer) syncTimer = window.setTimeout(sync, SYNC_DELAY);
+/**
+ * O que roda sempre: rota, botão do header, página de série/episódio e marcação dos cards.
+ * Não há MutationObserver de propósito: observar o <body> inteiro gera um registro por nó
+ * que o React insere (dezenas de milhares na rolagem infinita da home) e custou ~25% dos
+ * quadros nos testes. Um ciclo de consultas baratas, mais frequente enquanto se rola,
+ * faz o mesmo trabalho sem esse custo.
+ */
+const TICK_IDLE_MS = 900;
+const TICK_BUSY_MS = 250;
+let tickTimer = 0;
+let busyUntil = 0;
+let backlog = false;
+
+function tick(): void {
+  tickTimer = 0;
+  if (!document.hidden) {
+    sync();
+    backlog = decorateIn(document);
+  }
+  const busy = backlog || performance.now() < busyUntil;
+  tickTimer = window.setTimeout(tick, busy ? TICK_BUSY_MS : TICK_IDLE_MS);
+}
+
+function tickSoon(): void {
+  window.clearTimeout(tickTimer);
+  tickTimer = window.setTimeout(tick, 50);
 }
 
 export function initCrunchyroll(): void {
-  sync();
-  decorateIn(document);
-  new MutationObserver(onMutations).observe(document.body, { childList: true, subtree: true });
-  window.addEventListener('popstate', scheduleSync);
+  tick();
+  window.addEventListener('popstate', tickSoon);
+  // Rolando, as fileiras novas aparecem: o ciclo acelera por um instante.
+  window.addEventListener('scroll', () => { busyUntil = performance.now() + 1500; }, { passive: true });
   document.addEventListener('pointerover', onPointerOver, { passive: true });
   storage.subscribe(repaintAll);
   window.setTimeout(() => void importHistory(), 2500);
