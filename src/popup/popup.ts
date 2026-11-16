@@ -417,6 +417,19 @@ function setupSettings(): void {
     $('settingsBtn').setAttribute('aria-expanded', String(!panel.hidden));
   });
 
+  // Primeira abertura: mostra a explicação de como a extensão funciona.
+  const about = $('about');
+  about.hidden = settings.aboutSeen;
+  $('aboutOk').addEventListener('click', async () => {
+    settings = await storage.updateSettings({ aboutSeen: true });
+    about.hidden = true;
+  });
+  $('aboutOpen').addEventListener('click', event => {
+    event.preventDefault();
+    about.hidden = false;
+    about.scrollIntoView({ block: 'start' });
+  });
+
   panel.querySelectorAll<HTMLElement>('.toggle').forEach(toggle => {
     paintToggle(toggle);
     const flip = async () => {

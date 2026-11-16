@@ -44,6 +44,10 @@
   }
 
   function enqueue(job: () => void): void {
+    if (document.documentElement.dataset.boaNoDefer === '1') {
+      job();
+      return;
+    }
     stats.deferred += 1;
     queue.push(job);
     stats.maxQueue = Math.max(stats.maxQueue, queue.length);

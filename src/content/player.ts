@@ -4,6 +4,7 @@
  */
 import { storage } from '../shared/storage';
 import { Settings } from '../shared/types';
+import { runAutoSkip } from './autoskip';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const FILTER_ID = 'boa-sharpen';
@@ -97,6 +98,7 @@ export function applyPlayer(): void {
   const filter = buildFilter(settings);
   if (video.style.filter !== filter) video.style.filter = filter;
   applyVolume(video, settings.playerGain);
+  runAutoSkip();
 }
 
 /* ---------- painel ---------- */
@@ -168,7 +170,16 @@ export function buildPlayerButton(): HTMLElement {
       check.checked = false;
     });
   });
-  panel.append(auto, reset);
+  const skip = document.createElement('label');
+  skip.className = 'boa-player-auto';
+  const skipCheck = document.createElement('input');
+  skipCheck.type = 'checkbox';
+  skipCheck.checked = settings.autoSkip;
+  skipCheck.addEventListener('change', () => {
+    void storage.updateSettings({ autoSkip: skipCheck.checked }).then(applyPlayer);
+  });
+  skip.append(skipCheck, document.createTextNode(' Pular abertura e resumo (D cancela)'));
+  panel.append(skip, auto, reset);
 
   button.addEventListener('click', event => {
     event.preventDefault();

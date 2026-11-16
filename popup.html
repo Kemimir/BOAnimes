@@ -45,42 +45,88 @@
     <p class="muted">Você está na Crunchyroll: o BOAnimes marca séries, episódios e Crunchylistas direto na página.</p>
   </section>
 
+  <section id="about" class="panel about" hidden aria-labelledby="aboutTitle">
+    <h2 id="aboutTitle">Como o BOAnimes funciona</h2>
+    <h3>O que faz</h3>
+    <ul>
+      <li>Muda só a aparência da Crunchyroll no seu navegador: tema, fileiras em grade e player largo.</li>
+      <li>Guarda as séries e episódios que você marca, e o seu progresso.</li>
+      <li>Se você ativar, mantém as Crunchylistas "Favoritas", "Assistir Depois" e "Assistindo" na sua conta.</li>
+      <li>Aperta o botão "Pular" que o próprio player mostra, como você faria com o mouse. Dá para desligar e cancelar com a tecla D.</li>
+      <li>Ajusta nitidez, volume e cor da imagem somente na sua tela.</li>
+    </ul>
+    <h3>Quando faz</h3>
+    <ul>
+      <li>Só em páginas da Crunchyroll abertas por você. Em outros sites, só age quando você abre o popup.</li>
+      <li>Crunchylistas só se o recurso estiver ligado. AniList só depois de você conectar.</li>
+      <li>De vez em quando confere no GitHub se existe uma versão nova.</li>
+    </ul>
+    <h3>O que não faz</h3>
+    <ul>
+      <li>Não baixa nem grava vídeos, não burla proteção de conteúdo nem restrição de região.</li>
+      <li>Não bloqueia nem esconde anúncios ou avisos do site.</li>
+      <li>Não copia o catálogo, não cria índice de conteúdo e não faz login por você.</li>
+      <li>Não envia seus dados para nenhum servidor do BOAnimes: não existe servidor. Tudo fica neste navegador.</li>
+    </ul>
+    <h3>Termos de uso</h3>
+    <p class="muted">Os termos da Crunchyroll proíbem, entre outras coisas, baixar ou gravar conteúdo, burlar proteções e fazer acesso automatizado em massa. O BOAnimes foi feito para não fazer nada disso: só muda a exibição e aperta botões como você apertaria. Mesmo assim, ele não é oficial nem aprovado pela Crunchyroll, e ninguém pode garantir como o site interpreta os termos. Use por sua conta.</p>
+    <div class="row slim">
+      <button id="aboutOk" class="btn primary" type="button">Li e entendi</button>
+    </div>
+  </section>
+
   <nav class="chips" id="chips" aria-label="Filtrar biblioteca"></nav>
   <main id="list" class="list"></main>
 
   <section id="settings" class="settings" hidden aria-label="Ajustes">
+    <h4 class="group">Visual</h4>
     <div class="setting">
-      <div><h3>Tema BOAnimes na Crunchyroll</h3><p>Header flutuante, cards e fileiras com o visual próprio</p></div>
+      <div><h3>Tema BOAnimes</h3><p>Visual preto próprio no site</p></div>
       <div class="toggle" id="toggleTheme" data-key="themeEnabled" role="switch" tabindex="0"></div>
     </div>
     <div class="setting">
-      <div><h3>Fileiras em grade compacta</h3><p>Desligado, a home volta ao layout original do site</p></div>
+      <div><h3>Fileiras em grade</h3><p>Desligado, a home volta ao layout original</p></div>
       <div class="toggle" id="toggleGrid" data-key="compactGrid" role="switch" tabindex="0"></div>
     </div>
     <div class="setting">
-      <div><h3>Player largo</h3><p>Aumenta o player da página do episódio sem perder os controles</p></div>
-      <div class="toggle" id="toggleWide" data-key="widePlayer" role="switch" tabindex="0"></div>
-    </div>
-    <div class="setting">
-      <div><h3>Modo leve</h3><p>Libera as imagens das fileiras que saíram da tela e reduz o uso de memória da aba</p></div>
-      <div class="toggle" id="toggleLite" data-key="liteMode" role="switch" tabindex="0"></div>
-    </div>
-    <div class="setting">
-      <div><h3>Selos nos cards</h3><p>Mostra o status das séries nos pôsteres</p></div>
+      <div><h3>Selos nos pôsteres</h3><p>Mostra o status das séries</p></div>
       <div class="toggle" id="toggleBadges" data-key="showBadges" role="switch" tabindex="0"></div>
     </div>
     <div class="setting">
-      <div><h3>Crunchylistas nativas</h3><p>Mantém "Favoritas", "Assistir Depois" e "Assistindo" na sua conta</p></div>
+      <div><h3>Modo leve</h3><p>Menos memória e travamentos ao rolar a home</p></div>
+      <div class="toggle" id="toggleLite" data-key="liteMode" role="switch" tabindex="0"></div>
+    </div>
+    <h4 class="group">Player</h4>
+    <div class="setting">
+      <div><h3>Player largo</h3><p>Aumenta o player do episódio</p></div>
+      <div class="toggle" id="toggleWide" data-key="widePlayer" role="switch" tabindex="0"></div>
+    </div>
+    <div class="setting">
+      <div><h3>Pular abertura e resumo</h3><p>Aperta o botão "Pular" do player, após alguns segundos</p></div>
+      <div class="toggle" id="toggleSkip" data-key="autoSkip" role="switch" tabindex="0"></div>
+    </div>
+    <div class="setting">
+      <div><h3>Pular também os créditos</h3><p>Só vale com o pulo automático ligado</p></div>
+      <div class="toggle" id="toggleSkipCredits" data-key="autoSkipCredits" role="switch" tabindex="0"></div>
+    </div>
+    <div class="setting">
+      <div><h3>Atalhos do player</h3><p>J/L voltam e avançam 10 s; D cancela o pulo</p></div>
+      <div class="toggle" id="toggleKeys" data-key="playerKeys" role="switch" tabindex="0"></div>
+    </div>
+    <h4 class="group">Conta e dados</h4>
+    <div class="setting">
+      <div><h3>Crunchylistas nativas</h3><p>Cria e atualiza "Favoritas", "Assistir Depois" e "Assistindo" na sua conta. Desligado por padrão</p></div>
       <div class="toggle" id="toggleLists" data-key="syncCrunchylists" role="switch" tabindex="0"></div>
     </div>
     <div class="setting">
-      <div><h3>Sincronizar entre dispositivos</h3><p>Usa o sync do Chrome (sem capas)</p></div>
+      <div><h3>Sincronizar entre dispositivos</h3><p>Usa o sync do navegador (sem capas)</p></div>
       <div class="toggle" id="toggleSync" data-key="syncAcrossDevices" role="switch" tabindex="0"></div>
     </div>
     <div class="row slim">
       <button id="syncListsBtn" class="btn secondary" type="button">Sincronizar Crunchylistas agora</button>
     </div>
     <p id="syncListsStatus" class="muted" role="status"></p>
+    <p class="muted small"><a href="#" id="aboutOpen">Como funciona e termos de uso</a></p>
 
     <div class="block">
       <h3>AniList</h3>

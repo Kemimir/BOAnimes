@@ -78,13 +78,23 @@ export interface Settings {
   playerNight: number;
   /** Modo noturno só em horário noturno. */
   playerNightAuto: boolean;
+  /** Aperta sozinho o botão "Pular…" do player (abertura e resumo). */
+  autoSkip: boolean;
+  /** Também pula créditos/encerramento. */
+  autoSkipCredits: boolean;
+  /** Segundos de espera antes de pular. */
+  autoSkipDelay: number;
+  /** Atalhos J/L (±10 s) e D (cancela o pulo). */
+  playerKeys: boolean;
+  /** O usuário já leu a explicação de como a extensão funciona. */
+  aboutSeen: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   showBadges: true,
   syncAcrossDevices: false,
   themeEnabled: true,
-  syncCrunchylists: true,
+  syncCrunchylists: false,
   anilistClientId: '',
   compactGrid: true,
   widePlayer: false,
@@ -92,5 +102,10 @@ export const DEFAULT_SETTINGS: Settings = {
   playerSharp: 0,
   playerGain: 100,
   playerNight: 0,
-  playerNightAuto: false
+  playerNightAuto: false,
+  autoSkip: true,
+  autoSkipCredits: false,
+  autoSkipDelay: 3,
+  playerKeys: true,
+  aboutSeen: false
 };

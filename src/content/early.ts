@@ -18,13 +18,15 @@ if (debug.has('nojs')) document.documentElement.dataset.boaNoJs = '1';
 if (debug.has('nolite')) document.documentElement.dataset.boaNoLite = '1';
 document.documentElement.classList.toggle('boa-nocv', debug.has('nocv'));
 
-interface Flags { themeEnabled?: boolean; compactGrid?: boolean; widePlayer?: boolean }
+interface Flags { themeEnabled?: boolean; compactGrid?: boolean; widePlayer?: boolean; liteMode?: boolean }
 
 const apply = (settings?: Flags) => {
   const classes = document.documentElement.classList;
   classes.toggle('boa-theme-off', paused || settings?.themeEnabled === false);
   classes.toggle('boa-grid-off', paused || debug.has('grid') || settings?.compactGrid === false);
   classes.toggle('boa-wide-player', settings?.widePlayer === true);
+  // Modo leve desligado: a fila de respostas (page.ts) também fica inerte.
+  document.documentElement.dataset.boaNoDefer = settings?.liteMode === false ? '1' : '0';
 };
 
 // Lê também a chave antiga, para quem ainda não abriu a extensão depois da atualização.

@@ -4,6 +4,7 @@ import { closeDetail, DetailHooks, openDetail } from './detail';
 import { runLite } from './lite';
 import { ensureRowArrows } from './rows';
 import { applyPlayer, buildPlayerButton } from './player';
+import { onSkipped } from './autoskip';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
@@ -1007,6 +1008,7 @@ function tickSoon(): void {
 }
 
 export function initCrunchyroll(): void {
+  onSkipped(showToast);
   tick();
   window.addEventListener('popstate', tickSoon);
   // Rolando, as fileiras novas aparecem: o ciclo acelera por um instante.
