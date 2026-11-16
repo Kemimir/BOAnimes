@@ -1,7 +1,8 @@
 {
-  "name": "CrunchyBoa - By Kemir",
-  "version": "1.2.2",
-  "description": "Reorganiza a interface da Crunchyroll e rastreia séries com favoritos, assistidos e assistir depois",
+  "manifest_version": 3,
+  "name": "BOAnimes - By Kemir",
+  "version": "2.0.0",
+  "description": "Melhora a Crunchyroll e acompanha seus animes: favoritos, episódios vistos, Crunchylistas e AniList",
   "author": "Kemir",
   "icons": {
     "16": "icons/icon.svg",
@@ -9,7 +10,7 @@
     "128": "icons/icon.svg"
   },
   "action": {
-    "default_title": "CrunchyBoa",
+    "default_title": "BOAnimes",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon.svg",
@@ -17,33 +18,22 @@
       "128": "icons/icon.svg"
     }
   },
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting",
-    "contextMenus"
-  ],
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus", "identity"],
   "host_permissions": [
-    "https://raw.githubusercontent.com/Kemimir/CrunchyBoa/main/*",
+    "https://raw.githubusercontent.com/Kemimir/BOAnimes/main/*",
     "https://graphql.anilist.co/*",
-    "*://*.crunchyroll.com/*",
-    "*://*.animesorion.com/*",
-    "*://*.animesonlinecc.to/*",
-    "*://*.animefire.plus/*",
-    "*://*.otakuflix.com/*",
-    "*://*.animesonehd.com/*"
+    "*://*.crunchyroll.com/*"
   ],
   "content_scripts": [
     {
       "matches": ["*://*.crunchyroll.com/*"],
-      "js": ["content/main.js"],
-      "css": ["styles/main.css"],
-      "run_at": "document_idle"
+      "js": ["content/early.js"],
+      "css": ["styles/theme.css", "styles/crunchyroll.css"],
+      "run_at": "document_start"
     },
     {
-      "matches": ["*://*.animesorion.com/*", "*://*.animesonlinecc.to/*", "*://*.animefire.plus/*", "*://*.otakuflix.com/*", "*://*.animesonehd.com/*"],
+      "matches": ["*://*.crunchyroll.com/*"],
       "js": ["content/main.js"],
-      "css": ["styles/main.css"],
       "run_at": "document_idle"
     }
   ],
@@ -53,15 +43,8 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["styles/main.css", "icons/*"],
-      "matches": ["<all_urls>"]
+      "resources": ["icons/*"],
+      "matches": ["*://*.crunchyroll.com/*"]
     }
-  ],
-  "manifest_version": 3
+  ]
 }
-
-
-
-
-
-

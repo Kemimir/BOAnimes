@@ -1,260 +1,501 @@
-import { storage, AnimeEntry, AnimeStatus } from '../shared/storage';
-import { DEFAULT_SETTINGS, STORAGE_KEY } from '../shared/types';
+import { storage, AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/storage';
+import { Settings } from '../shared/types';
+import {
+  AniMedia, connect, disconnect, displayTitle, getAuth, parseTitle, redirectUrl, savePlanning, saveProgress, searchAnime
+} from '../shared/anilist';
+import { PageProbe, probePage } from './detect';
 
-let allEntries: AnimeEntry[] = [];
-let currentFilter: string = 'all';
-let currentSiteFilter: string = 'all';
-let settings: typeof DEFAULT_SETTINGS = { ...DEFAULT_SETTINGS };
+const CR_ORIGIN = 'https://www.crunchyroll.com';
+const MATCHES_KEY = 'boanimes_matches';
 
-const statusLabels: Record<AnimeStatus, string> = {
-  favorite: 'Favorita',
-  watched: 'Assistida',
-  watching: 'Assistindo',
-  watch_later: 'Assistir depois'
+type Tab = 'all' | 'favorite' | 'episodes' | 'watching' | 'watch_later' | 'watched';
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'all', label: 'Todas' },
+  { key: 'favorite', label: 'Séries ★' },
+  { key: 'episodes', label: 'Episódios ♥' },
+  { key: 'watching', label: 'Assistindo' },
+  { key: 'watch_later', label: 'Depois' },
+  { key: 'watched', label: 'Assistidas' }
+];
+
+const STATUS_LABEL: Record<AnimeStatus, string> = {
+  favorite: 'Favorita', watched: 'Assistida', watching: 'Assistindo', watch_later: 'Assistir depois'
 };
 
-const statusIcons: Record<AnimeStatus, string> = {
-  favorite: '★',
-  watched: '✓',
-  watching: '▶',
-  watch_later: '+'
-};
+let tab: Tab = 'all';
+let settings: Settings;
+let currentTab: chrome.tabs.Tab | undefined;
+
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text?: string): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+const hostOf = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } };
+
+/* ------------------------------------------------------------------ */
+/* Biblioteca                                                          */
+/* ------------------------------------------------------------------ */
+
+function inTab(entry: AnimeEntry, key: Tab): boolean {
+  if (key === 'all') return true;
+  if (key === 'favorite') return Boolean(entry.favorite);
+  return entry.status === key;
+}
+
+function renderChips(): void {
+  const entries = storage.list();
+  const nav = $('chips');
+  nav.replaceChildren(...TABS.map(({ key, label }) => {
+    const count = key === 'episodes' ? storage.listEpisodes().length : entries.filter(entry => inTab(entry, key)).length;
+    const chip = h('button', 'chip', `${label} · ${count}`);
+    chip.type = 'button';
+    chip.setAttribute('aria-pressed', String(key === tab));
+    chip.addEventListener('click', () => { tab = key; renderAll(); });
+    return chip;
+  }));
+}
+
+function coverImage(url?: string, className = 'cover'): HTMLElement {
+  if (!url) return h('span', className);
+  const image = h('img', className);
+  image.src = url;
+  image.alt = '';
+  image.loading = 'lazy';
+  image.addEventListener('error', () => image.replaceWith(h('span', className)));
+  return image;
+}
+
+function actionButton(label: string, text: string, pressed: boolean | null, run: () => void, danger = false): HTMLButtonElement {
+  const button = h('button', `act${danger ? ' danger' : ''}`, text);
+  button.type = 'button';
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  if (pressed !== null) button.setAttribute('aria-pressed', String(pressed));
+  button.addEventListener('click', run);
+  return button;
+}
+
+function entryCard(entry: AnimeEntry): HTMLElement {
+  const card = h('div', 'card');
+  card.appendChild(coverImage(entry.coverUrl));
+  const info = h('div', 'grow');
+  info.appendChild(h('div', 'name', entry.title)).setAttribute('title', entry.title);
+
+  const meta = h('div', 'meta');
+  meta.appendChild(h('span', 'badge', STATUS_LABEL[entry.status]));
+  meta.appendChild(h('span', '', entry.site === 'anilist' ? hostOf(entry.siteUrl) || 'AniList' : entry.site === 'crunchyroll' ? 'Crunchyroll' : entry.site));
+  if (entry.totalEpisodes) meta.appendChild(h('span', '', `${entry.episodesWatched || 0}/${entry.totalEpisodes} eps`));
+  else if (entry.episodesWatched) meta.appendChild(h('span', '', `${entry.episodesWatched} eps`));
+  if (entry.anilistId) {
+    const link = h('a', '', 'AniList');
+    link.href = `https://anilist.co/anime/${entry.anilistId}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    meta.appendChild(link);
+  }
+  if (entry.malId) {
+    const link = h('a', '', 'MAL');
+    link.href = `https://myanimelist.net/anime/${entry.malId}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    meta.appendChild(link);
+  }
+  info.appendChild(meta);
+
+  if (entry.totalEpisodes) {
+    const bar = h('div', 'bar');
+    const fill = h('i');
+    fill.style.width = `${Math.min(100, Math.round(((entry.episodesWatched || 0) / entry.totalEpisodes) * 100))}%`;
+    bar.appendChild(fill);
+    info.appendChild(bar);
+  }
+
+  const acts = h('div', 'acts');
+  acts.append(
+    actionButton('Favoritar série', '★', Boolean(entry.favorite), () => update(entry, e => { e.favorite = !e.favorite; })),
+    actionButton('Assistindo', '▶', entry.status === 'watching', () => update(entry, e => { e.status = 'watching'; })),
+    actionButton('Assistir depois', '⏱', entry.status === 'watch_later', () => update(entry, e => { e.status = 'watch_later'; })),
+    actionButton('Marcar como assistida', '✓', entry.status === 'watched', () => update(entry, e => {
+      e.status = 'watched';
+      if (e.totalEpisodes) e.episodesWatched = e.totalEpisodes;
+    })),
+    actionButton('Remover da biblioteca', '🗑', null, () => void remove(entry), true)
+  );
+  info.appendChild(acts);
+  card.appendChild(info);
+  return card;
+}
+
+function episodeCard(fav: EpisodeFav): HTMLElement {
+  const card = h('div', 'card');
+  card.appendChild(coverImage(fav.thumb));
+  const info = h('div', 'grow');
+  info.appendChild(h('div', 'name', fav.title)).setAttribute('title', fav.title);
+  const meta = h('div', 'meta');
+  meta.appendChild(h('span', '', fav.seriesTitle));
+  info.appendChild(meta);
+  const acts = h('div', 'acts');
+  const open = h('a', 'act', '↗');
+  open.href = CR_ORIGIN + fav.url;
+  open.target = '_blank';
+  open.rel = 'noopener';
+  open.title = 'Abrir na Crunchyroll';
+  open.setAttribute('aria-label', 'Abrir na Crunchyroll');
+  acts.append(open, actionButton('Remover dos favoritos', '🗑', null, () => {
+    void storage.removeEpisode(fav.id).then(renderAll);
+  }, true));
+  info.appendChild(acts);
+  card.appendChild(info);
+  return card;
+}
+
+function renderList(): void {
+  const list = $('list');
+  if (tab === 'episodes') {
+    const items = storage.listEpisodes().sort((a, b) => b.addedAt - a.addedAt);
+    list.replaceChildren(...(items.length
+      ? items.map(episodeCard)
+      : [h('p', 'empty', 'Nenhum episódio favorito. Use o coração na página de um episódio.')]));
+    return;
+  }
+  const items = storage.list().filter(entry => inTab(entry, tab)).sort((a, b) => b.lastUpdated - a.lastUpdated);
+  list.replaceChildren(...(items.length
+    ? items.map(entryCard)
+    : [h('p', 'empty', 'Nada por aqui ainda. Visite uma série na Crunchyroll ou use o painel acima em outro site.')]));
+}
+
+function renderAll(): void {
+  renderChips();
+  renderList();
+}
+
+async function update(entry: AnimeEntry, change: (entry: AnimeEntry) => void): Promise<void> {
+  change(entry);
+  await storage.set(entry);
+  renderAll();
+  // As Crunchylistas nativas só podem ser tocadas de dentro da aba da Crunchyroll.
+  if (entry.site === 'crunchyroll' && settings.syncCrunchylists) void pushListsFromPopup();
+}
+
+async function remove(entry: AnimeEntry): Promise<void> {
+  await storage.remove(storage.getKey(entry));
+  renderAll();
+  if (entry.site === 'crunchyroll') void pushListsFromPopup();
+}
+
+/** Pede à aba aberta da Crunchyroll (se houver) para atualizar as Crunchylistas. */
+async function pushListsFromPopup(): Promise<{ done: number; total: number; loggedIn: boolean } | null> {
+  const tabs = await chrome.tabs.query({ url: ['*://*.crunchyroll.com/*'] });
+  const target = tabs.find(candidate => candidate.active) || tabs[0];
+  if (!target?.id) return null;
+  try {
+    return await chrome.tabs.sendMessage(target.id, { type: 'SYNC_LISTS' });
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Outros sites: detecção do player + AniList                          */
+/* ------------------------------------------------------------------ */
+
+interface Detection { probe: PageProbe; videos: number; hosts: string[] }
+
+let media: AniMedia[] = [];
+let selected = -1;
+let pageOrigin = '';
+
+async function detectPage(): Promise<void> {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+  currentTab = active;
+  const url = active?.url || '';
+  if (!active?.id || !/^https?:/i.test(url)) return;
+  if (/(^|\.)crunchyroll\.com$/i.test(hostOf(url))) {
+    $('onCr').hidden = false;
+    return;
+  }
+  pageOrigin = new URL(url).origin;
+
+  let probes: PageProbe[] = [];
+  try {
+    const results = await chrome.scripting.executeScript({ target: { tabId: active.id, allFrames: true }, func: probePage });
+    probes = results.map(result => result.result).filter((probe): probe is PageProbe => Boolean(probe));
+  } catch {
+    // Páginas protegidas (loja do Chrome, PDF…) não aceitam injeção: segue só com a busca manual.
+  }
+  const top = probes.find(probe => probe.top);
+  const detection: Detection | null = top ? {
+    probe: top,
+    videos: probes.reduce((sum, probe) => sum + probe.videos.length, 0),
+    hosts: [...new Set(probes.flatMap(probe => probe.iframes))]
+  } : null;
+
+  $('detect').hidden = false;
+  const players = detection ? detection.videos + detection.hosts.length : 0;
+  $('detectInfo').textContent = !detection
+    ? hostOf(url)
+    : players
+      ? `${hostOf(url)} · ${players} player${players > 1 ? 's' : ''}`
+      : `${hostOf(url)} · player não encontrado`;
+
+  if (detection) {
+    const parsed = parseTitle([detection.probe.jsonLd, detection.probe.h1, detection.probe.og, detection.probe.title], detection.probe.url);
+    ($('detSeries') as HTMLInputElement).value = parsed.series;
+    ($('detEp') as HTMLInputElement).value = parsed.episode !== null ? String(parsed.episode) : '';
+    if (parsed.series) await runSearch();
+  }
+}
+
+async function runSearch(): Promise<void> {
+  const query = ($('detSeries') as HTMLInputElement).value.trim();
+  const status = $('detStatus');
+  if (!query) { status.textContent = 'Digite o nome da série.'; return; }
+  status.textContent = 'Buscando no AniList…';
+  try {
+    media = await searchAnime(query);
+  } catch (error) {
+    media = [];
+    status.textContent = `Não consegui consultar o AniList: ${(error as Error).message}`;
+    renderResults();
+    return;
+  }
+  const remembered = (await chrome.storage.local.get(MATCHES_KEY))[MATCHES_KEY] as Record<string, number> | undefined;
+  const known = remembered?.[matchKey(query)];
+  selected = media.length ? Math.max(0, media.findIndex(item => item.id === known)) : -1;
+  status.textContent = media.length ? '' : 'Nenhum resultado. Tente um nome mais curto.';
+  renderResults();
+}
+
+const matchKey = (query: string) => `${hostOf(currentTab?.url || '')}|${query.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()}`;
+
+function renderResults(): void {
+  $('detResults').replaceChildren(...media.map((item, index) => {
+    const row = h('li');
+    const button = h('button', 'result');
+    button.type = 'button';
+    button.setAttribute('role', 'radio');
+    button.setAttribute('aria-checked', String(index === selected));
+    button.appendChild(coverImage(item.coverImage?.large || undefined));
+    const text = h('span', 'grow');
+    text.appendChild(h('span', 'name', displayTitle(item))).setAttribute('title', displayTitle(item));
+    const detail = [item.format, item.seasonYear, item.episodes ? `${item.episodes} eps` : null].filter(Boolean).join(' · ');
+    text.appendChild(h('span', 'muted', detail));
+    button.appendChild(text);
+    button.addEventListener('click', () => { selected = index; renderResults(); });
+    row.appendChild(button);
+    return row;
+  }));
+  const ready = selected >= 0;
+  ($('detWatched') as HTMLButtonElement).disabled = !ready;
+  ($('detPlan') as HTMLButtonElement).disabled = !ready;
+}
+
+async function upsertFromMedia(item: AnimeEntry | null, picked: AniMedia): Promise<AnimeEntry> {
+  const key = `anilist:${picked.id}`;
+  return item || storage.peek(key) || {
+    id: String(picked.id),
+    title: displayTitle(picked),
+    coverUrl: picked.coverImage?.large || undefined,
+    site: 'anilist',
+    siteUrl: pageOrigin,
+    status: 'watch_later',
+    episodesWatched: 0,
+    totalEpisodes: picked.episodes || undefined,
+    anilistId: picked.id,
+    malId: picked.idMal || undefined,
+    lastUpdated: Date.now()
+  };
+}
+
+async function rememberMatch(picked: AniMedia): Promise<void> {
+  const query = ($('detSeries') as HTMLInputElement).value;
+  const stored = (await chrome.storage.local.get(MATCHES_KEY))[MATCHES_KEY] as Record<string, number> | undefined;
+  await chrome.storage.local.set({ [MATCHES_KEY]: { ...(stored || {}), [matchKey(query)]: picked.id } });
+}
+
+async function markWatched(): Promise<void> {
+  const picked = media[selected];
+  const episode = Math.floor(Number(($('detEp') as HTMLInputElement).value));
+  const status = $('detStatus');
+  if (!picked) return;
+  if (!(episode > 0)) { status.textContent = 'Informe o número do episódio.'; return; }
+
+  const entry = await upsertFromMedia(null, picked);
+  entry.siteUrl = pageOrigin || entry.siteUrl;
+  entry.episodesWatched = Math.max(entry.episodesWatched || 0, episode);
+  entry.totalEpisodes = picked.episodes || entry.totalEpisodes;
+  if (entry.totalEpisodes && entry.episodesWatched >= entry.totalEpisodes) entry.status = 'watched';
+  else if (entry.status !== 'watched') entry.status = 'watching';
+  await storage.set(entry);
+  await rememberMatch(picked);
+  renderAll();
+
+  let message = `Salvo: ${entry.title} · ep. ${episode}`;
+  const auth = await getAuth();
+  if (auth) {
+    try {
+      const result = await saveProgress(picked, episode, auth.token);
+      message += result.saved
+        ? ` · AniList atualizado (${result.progress}${picked.episodes ? `/${picked.episodes}` : ''})`
+        : ` · AniList já está no ep. ${result.progress}`;
+    } catch (error) {
+      message += ` · AniList falhou: ${(error as Error).message}`;
+    }
+  } else {
+    message += ' · conecte o AniList nos ajustes para enviar o progresso';
+  }
+  status.textContent = message;
+}
+
+async function markPlanning(): Promise<void> {
+  const picked = media[selected];
+  if (!picked) return;
+  const existing = storage.peek(`anilist:${picked.id}`);
+  const entry = await upsertFromMedia(existing, picked);
+  entry.siteUrl = pageOrigin || entry.siteUrl;
+  await storage.set(entry);
+  await rememberMatch(picked);
+  renderAll();
+  let message = `Guardado em Assistir depois: ${entry.title}`;
+  const auth = await getAuth();
+  if (auth) {
+    try {
+      message += (await savePlanning(picked.id, auth.token)) ? ' · adicionado ao AniList (Planejo assistir)' : ' · já estava na sua lista do AniList';
+    } catch (error) {
+      message += ` · AniList falhou: ${(error as Error).message}`;
+    }
+  }
+  $('detStatus').textContent = message;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ajustes                                                             */
+/* ------------------------------------------------------------------ */
+
+function paintToggle(toggle: HTMLElement): void {
+  toggle.setAttribute('aria-checked', String(Boolean(settings[toggle.dataset.key as keyof Settings])));
+}
+
+async function renderAniList(): Promise<void> {
+  const auth = await getAuth();
+  $('anilistStatus').textContent = auth ? `Conectado como ${auth.viewer.name}.` : 'Não conectado. Sem conta, só a busca funciona.';
+  $('anilistConnect').hidden = Boolean(auth);
+  $('anilistDisconnect').hidden = !auth;
+  ($('anilistClient') as HTMLInputElement).hidden = Boolean(auth);
+}
+
+function setupSettings(): void {
+  const panel = $('settings');
+  $('settingsBtn').addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+    $('settingsBtn').setAttribute('aria-expanded', String(!panel.hidden));
+  });
+
+  panel.querySelectorAll<HTMLElement>('.toggle').forEach(toggle => {
+    paintToggle(toggle);
+    const flip = async () => {
+      const key = toggle.dataset.key as keyof Settings;
+      settings = await storage.updateSettings({ [key]: !settings[key] });
+      paintToggle(toggle);
+    };
+    toggle.addEventListener('click', () => void flip());
+    toggle.addEventListener('keydown', event => {
+      if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); void flip(); }
+    });
+  });
+
+  $('syncListsBtn').addEventListener('click', async () => {
+    const status = $('syncListsStatus');
+    status.textContent = 'Sincronizando…';
+    const result = await pushListsFromPopup();
+    status.textContent = !result
+      ? 'Abra a Crunchyroll (logado) em uma aba e tente de novo.'
+      : !result.loggedIn
+        ? 'Faça login na Crunchyroll para usar as Crunchylistas.'
+        : `Pronto: ${result.total} séries conferidas.`;
+  });
+
+  const client = $('anilistClient') as HTMLInputElement;
+  client.value = settings.anilistClientId;
+  client.addEventListener('change', () => void storage.updateSettings({ anilistClientId: client.value.trim() }));
+  ($('anilistRedirect') as HTMLInputElement).value = redirectUrl();
+  $('anilistCopy').addEventListener('click', () => {
+    void navigator.clipboard.writeText(redirectUrl());
+    $('anilistCopy').textContent = 'Copiado';
+    window.setTimeout(() => { $('anilistCopy').textContent = 'Copiar'; }, 1500);
+  });
+  $('anilistConnect').addEventListener('click', async () => {
+    const id = client.value.trim();
+    if (!id) { $('anilistStatus').textContent = 'Cole o Client ID do seu app AniList primeiro.'; return; }
+    await storage.updateSettings({ anilistClientId: id });
+    $('anilistStatus').textContent = 'Abrindo o login do AniList…';
+    try {
+      await connect(id);
+    } catch (error) {
+      $('anilistStatus').textContent = `Não consegui conectar: ${(error as Error).message}`;
+      return;
+    }
+    await renderAniList();
+  });
+  $('anilistDisconnect').addEventListener('click', async () => {
+    await disconnect();
+    await renderAniList();
+  });
+  void renderAniList();
+
+  $('exportBtn').addEventListener('click', async event => {
+    event.preventDefault();
+    const url = URL.createObjectURL(new Blob([await storage.exportData()], { type: 'application/json' }));
+    const link = h('a');
+    link.href = url;
+    link.download = `boanimes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+  $('importBtn').addEventListener('click', event => {
+    event.preventDefault();
+    $('importFile').click();
+  });
+  $('importFile').addEventListener('change', async event => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const count = await storage.importData(await file.text());
+      renderAll();
+      $('detStatus').textContent = `${count} séries importadas.`;
+    } catch {
+      $('detStatus').textContent = 'Arquivo de backup inválido.';
+    }
+    input.value = '';
+  });
+}
+
+function checkForUpdate(): void {
+  chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' }, result => {
+    if (chrome.runtime.lastError || !result?.available) return;
+    $('updateText').textContent = `Atualização disponível: v${result.latest}`;
+    $('updateNotice').hidden = false;
+  });
+}
 
 async function init(): Promise<void> {
   await storage.init();
   settings = await storage.getSettings();
-  allEntries = await storage.getAll();
-  
-  setupTabs();
-  setupSiteFilter();
-  setupToggles();
-  setupExportImport();
+  setupSettings();
   renderAll();
   checkForUpdate();
+
+  $('detSearch').addEventListener('click', () => void runSearch());
+  ($('detSeries') as HTMLInputElement).addEventListener('keydown', event => { if (event.key === 'Enter') void runSearch(); });
+  $('detWatched').addEventListener('click', () => void markWatched());
+  $('detPlan').addEventListener('click', () => void markPlanning());
+  await detectPage();
 }
 
-function checkForUpdate(): void {
-  chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' }, (result) => {
-    if (chrome.runtime.lastError || !result?.available) return;
-    const notice = document.getElementById('updateNotice');
-    const text = document.getElementById('updateText');
-    if (!notice || !text) return;
-    text.textContent = `Atualização disponível: v${result.latest}`;
-    notice.hidden = false;
-  });
-}
-
-function setupTabs(): void {
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      
-      tab.classList.add('active');
-      const tabName = tab.dataset.tab!;
-      currentFilter = tabName;
-      document.getElementById(`panel-${tabName}`)!.classList.add('active');
-      
-      renderList(tabName);
-    });
-  });
-}
-
-function setupSiteFilter(): void {
-  const container = document.getElementById('siteFilter')!;
-  const sites = ['all', 'crunchyroll', 'animesorion', 'animesonlinecc', 'animefire', 'otakuflix', 'animesonehd'];
-  
-  sites.forEach(site => {
-    const chip = document.createElement('span');
-    chip.className = `site-chip${site === 'all' ? ' active' : ''}`;
-    chip.dataset.site = site;
-    chip.textContent = site === 'all' ? 'Todos os sites' : site;
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.site-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      currentSiteFilter = site;
-      renderList(currentFilter);
-    });
-    container.appendChild(chip);
-  });
-}
-
-function setupToggles(): void {
-  const toggles = [
-    { id: 'toggleBadges', key: 'showBadges' as keyof typeof settings },
-    { id: 'toggleAutoDetect', key: 'autoDetectCrunchyroll' as keyof typeof settings },
-    { id: 'toggleSync', key: 'syncAcrossDevices' as keyof typeof settings }
-  ];
-  
-  toggles.forEach(({ id, key }) => {
-    const el = document.getElementById(id)!;
-    el.classList.toggle('active', settings[key]);
-    el.addEventListener('click', async () => {
-      const newVal = !settings[key];
-      el.classList.toggle('active', newVal);
-      settings = await storage.updateSettings({ [key]: newVal });
-    });
-  });
-}
-
-function setupExportImport(): void {
-  document.getElementById('exportBtn')!.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const json = await storage.exportData();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `crunchyboa-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-  
-  document.getElementById('importBtn')!.addEventListener('click', (e) => {
-    e.preventDefault();
-    (document.getElementById('importFile') as HTMLInputElement).click();
-  });
-  
-  document.getElementById('importFile')!.addEventListener('change', async (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    const count = await storage.importData(text);
-    allEntries = await storage.getAll();
-    renderAll();
-    alert(`Importados ${count} animes com sucesso!`);
-    (e.target as HTMLInputElement).value = '';
-  });
-}
-
-function renderAll(): void {
-  renderList('all');
-  renderList('favorite');
-  renderList('watched');
-  renderList('watching');
-  renderList('later');
-}
-
-function renderList(tabName: string): void {
-  const panel = document.getElementById(`panel-${tabName}`)!;
-  let entries = allEntries;
-  
-  if (tabName !== 'all') {
-    const statusMap: Record<string, AnimeStatus> = {
-      favorite: 'favorite',
-      watched: 'watched',
-      watching: 'watching',
-      later: 'watch_later'
-    };
-    entries = tabName === 'favorite'
-      ? entries.filter(e => e.favorite || e.status === 'favorite')
-      : entries.filter(e => e.status === statusMap[tabName]);
-  }
-  
-  if (currentSiteFilter !== 'all') {
-    entries = entries.filter(e => e.site === currentSiteFilter);
-  }
-  
-  entries.sort((a, b) => b.lastUpdated - a.lastUpdated);
-  
-  if (entries.length === 0) {
-    panel.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <path d="M9 9h6v6H9z"/>
-        </svg>
-        <p>${getEmptyMessage(tabName)}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  panel.innerHTML = entries.map(e => createCard(e)).join('');
-  
-  panel.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('click', async (ev) => {
-      const action = (ev.currentTarget as HTMLButtonElement).dataset.action!;
-      const id = (ev.currentTarget as HTMLButtonElement).dataset.id!;
-      await handleAction(action, id);
-    });
-  });
-}
-
-function getEmptyMessage(tab: string): string {
-  const messages: Record<string, string> = {
-    all: 'Nenhum anime salvo ainda. Visite uma página de série para começar!',
-    favorite: 'Nenhuma favorita. Clique na estrela em uma série para marcar.',
-    watched: 'Nenhuma série marcada como assistida.',
-    watching: 'Nenhuma série em andamento.',
-    later: 'Nenhuma série na lista "assistir depois".'
-  };
-  return messages[tab] || messages.all;
-}
-
-function createCard(entry: AnimeEntry): string {
-  const progress = entry.totalEpisodes && entry.episodesWatched !== undefined
-    ? Math.min(100, Math.round((entry.episodesWatched / entry.totalEpisodes) * 100))
-    : 0;
-  
-  return `
-    <div class="anime-card" data-id="${entry.id}">
-      <img class="anime-cover" src="${entry.coverUrl || ''}" alt="${entry.title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-      <div style="display:none; width:60px; height:84px; border-radius:6px; background:#2a2a2a; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">📺</div>
-      <div class="anime-info">
-        <div class="anime-title" title="${entry.title}">${entry.title}</div>
-        <div class="anime-meta">
-          <span class="status-badge status-${entry.status}">${statusIcons[entry.status]} ${statusLabels[entry.status]}</span>
-          <span>${entry.site}</span>
-          ${entry.anilistId ? `<a class="external-link" href="https://anilist.co/anime/${entry.anilistId}" target="_blank">AniList</a>` : ''}
-          ${entry.totalEpisodes ? `<span>${entry.episodesWatched || 0}/${entry.totalEpisodes} eps</span>` : ''}
-        </div>
-        ${entry.totalEpisodes ? `
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${progress}%"></div>
-          </div>
-        ` : ''}
-        <div class="actions">
-          <button class="action-btn ${entry.favorite ? 'primary' : 'secondary'}" data-action="favorite" data-id="${entry.id}">${entry.favorite ? '★ Favoritado' : '☆ Favoritar'}</button>
-          ${entry.status !== 'watched' ? `<button class="action-btn primary" data-action="watched" data-id="${entry.id}">✓ Marcar assistida</button>` : ''}
-          ${entry.status !== 'watching' ? `<button class="action-btn secondary" data-action="watching" data-id="${entry.id}">▶ Assistindo</button>` : ''}
-          ${entry.status !== 'watch_later' ? `<button class="action-btn secondary" data-action="later" data-id="${entry.id}">+ Assistir depois</button>` : ''}
-          <button class="action-btn danger" data-action="remove" data-id="${entry.id}" style="width:auto; padding:6px 10px;">🗑</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-async function handleAction(action: string, id: string): Promise<void> {
-  const entry = allEntries.find(e => e.id === id);
-  if (!entry) return;
-  
-  const statusMap: Record<string, AnimeStatus> = {
-    favorite: 'favorite',
-    watched: 'watched',
-    watching: 'watching',
-    later: 'watch_later'
-  };
-  
-  if (action === 'remove') {
-    await storage.remove(id);
-    allEntries = allEntries.filter(e => e.id !== id);
-  } else if (action === 'favorite') {
-    entry.favorite = !entry.favorite;
-    entry.lastUpdated = Date.now();
-    await storage.set(entry);
-  } else if (statusMap[action]) {
-    entry.status = statusMap[action];
-    entry.lastUpdated = Date.now();
-    if (action === 'watched' && entry.totalEpisodes) {
-      entry.episodesWatched = entry.totalEpisodes;
-    }
-    await storage.set(entry);
-  }
-  
-  allEntries = await storage.getAll();
-  renderAll();
-}
-
-init();
+void init();

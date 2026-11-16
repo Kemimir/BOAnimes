@@ -1,0 +1,108 @@
+/* Popup do BOAnimes. Sem blur, sem sombras grandes: abre instantâneo. */
+:root {
+  --bg: #0b0d12;
+  --srf: #141821;
+  --srf2: #1d2330;
+  --line: rgba(255, 255, 255, .09);
+  --txt: #f1f2f5;
+  --txt2: #a9b0bf;
+  --acc: #ff640a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 420px;
+  min-height: 300px;
+  background: var(--bg);
+  color: var(--txt);
+  font: 13px/1.4 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+}
+
+a { color: var(--acc); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { font-weight: 700; }
+.muted { color: var(--txt2); font-size: 12px; }
+.small { font-size: 11px; margin-top: 8px; }
+[hidden] { display: none !important; }
+
+/* ----- topo ----- */
+.top { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--acc); }
+.logo svg { width: 26px; height: 26px; }
+.brand { flex: 1; min-width: 0; }
+.brand h1 { font-size: 17px; letter-spacing: -.01em; }
+.brand span { color: var(--txt2); font-size: 11px; }
+.icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: none; color: var(--txt2); cursor: pointer; }
+.icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.icon-btn:hover, .icon-btn[aria-expanded="true"] { background: var(--srf2); color: var(--acc); }
+
+.notice { display: flex; justify-content: space-between; gap: 8px; margin: 10px 16px 0; padding: 8px 12px; border: 1px solid rgba(255, 100, 10, .4); border-radius: 10px; background: rgba(255, 100, 10, .1); font-size: 12px; }
+
+/* ----- painéis ----- */
+.panel { margin: 12px 16px 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--srf); }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.panel-head h2 { font-size: 13px; }
+.row { display: flex; gap: 6px; margin-top: 8px; }
+.row.slim { margin-top: 6px; }
+input[type="text"], input[type="number"] {
+  flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--txt); font: inherit;
+}
+input.narrow { flex: 0 0 64px; }
+input:focus-visible, button:focus-visible, .toggle:focus-visible, a:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+
+.btn { padding: 8px 12px; border: 1px solid transparent; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn.primary { flex: 1; background: var(--acc); color: #1c0f04; }
+.btn.secondary { background: var(--srf2); border-color: var(--line); color: var(--txt); }
+.btn:hover:not(:disabled) { filter: brightness(1.1); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+.results { list-style: none; margin-top: 8px; }
+.result { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px; border: 1px solid transparent; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.result:hover { background: var(--srf2); }
+.result[aria-checked="true"] { border-color: var(--acc); background: var(--srf2); }
+.cover { flex: 0 0 auto; width: 36px; height: 52px; border-radius: 6px; background: var(--srf2); object-fit: cover; }
+.grow { flex: 1; min-width: 0; }
+.name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ----- filtros ----- */
+.chips { display: flex; gap: 4px; padding: 12px 16px 8px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; padding: 6px 10px; border: 0; border-radius: 999px; background: var(--srf); color: var(--txt2); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.chip:hover { color: var(--txt); }
+.chip[aria-pressed="true"] { background: var(--acc); color: #1c0f04; }
+
+/* ----- biblioteca ----- */
+.list { max-height: 340px; padding: 4px 16px 12px; overflow-y: auto; }
+.empty { padding: 28px 12px; color: var(--txt2); text-align: center; }
+.card { display: flex; gap: 10px; margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--srf); }
+.card .cover { width: 48px; height: 68px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 2px; color: var(--txt2); font-size: 11px; }
+.badge { padding: 1px 6px; border-radius: 6px; background: var(--srf2); color: var(--acc); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.bar { height: 4px; margin-top: 6px; overflow: hidden; border-radius: 2px; background: var(--srf2); }
+.bar > i { display: block; height: 100%; background: var(--acc); }
+.acts { display: flex; gap: 4px; margin-top: 6px; }
+.act { display: grid; place-items: center; width: 30px; height: 28px; border: 0; border-radius: 8px; background: var(--srf2); color: var(--txt2); font-size: 14px; cursor: pointer; }
+.act:hover { color: var(--txt); }
+.act[aria-pressed="true"] { background: rgba(255, 100, 10, .18); color: var(--acc); }
+.act.danger:hover { color: #ff6b6b; }
+
+/* ----- ajustes ----- */
+.settings { padding: 4px 16px 12px; border-top: 1px solid var(--line); background: var(--srf); }
+.setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.setting h3 { font-size: 13px; }
+.setting p { color: var(--txt2); font-size: 11px; }
+.block { margin-top: 12px; }
+.block h3 { font-size: 13px; }
+.toggle { flex: 0 0 auto; position: relative; width: 40px; height: 22px; border: 1px solid var(--line); border-radius: 11px; background: var(--srf2); cursor: pointer; transition: background-color .15s; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.toggle[aria-checked="true"] { border-color: transparent; background: var(--acc); }
+.toggle[aria-checked="true"]::after { transform: translateX(18px); }
+
+.foot { padding: 10px 16px 14px; border-top: 1px solid var(--line); color: var(--txt2); font-size: 11px; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle, .toggle::after { transition: none; }
+}

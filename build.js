@@ -13,7 +13,7 @@ async function buildAll() {
   try {
     // Build content scripts as IIFE (not ESM) - they run in page context
     await build({
-      entryPoints: ['src/content/main.ts'],
+      entryPoints: ['src/content/main.ts', 'src/content/early.ts'],
       bundle: true,
       outdir: join(outDir, 'content'),
       format: 'iife',
@@ -23,7 +23,6 @@ async function buildAll() {
       minify: !isWatch,
       sourcemap: isWatch,
       external: ['chrome'],
-      globalName: 'CrunchyBoaContent'
     });
     
     // Build popup
@@ -69,9 +68,9 @@ async function buildAll() {
     const iconsDir = join(outDir, 'icons');
     if (!existsSync(iconsDir)) mkdirSync(iconsDir, { recursive: true });
     
-    console.log('[CrunchyBoa] Build complete:', new Date().toLocaleTimeString());
+    console.log('[BOAnimes] Build complete:', new Date().toLocaleTimeString());
   } catch (e) {
-    console.error('[CrunchyBoa] Build failed:', e);
+    console.error('[BOAnimes] Build failed:', e);
     process.exit(1);
   }
 }
@@ -79,5 +78,5 @@ async function buildAll() {
 buildAll();
 
 if (isWatch) {
-  console.log('[CrunchyBoa] Watching for changes...');
+  console.log('[BOAnimes] Watching for changes...');
 }

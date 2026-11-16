@@ -1,182 +1,201 @@
-import { AnimeEntry, STORAGE_KEY, SETTINGS_KEY, DEFAULT_SETTINGS, Settings } from './types';
+import {
+  AnimeEntry,
+  EpisodeFav,
+  Settings,
+  DEFAULT_SETTINGS,
+  STORAGE_KEY,
+  SETTINGS_KEY,
+  EPISODES_KEY,
+  WRITER_KEY,
+  LEGACY_STORAGE_KEY,
+  LEGACY_SETTINGS_KEY
+} from './types';
+
+export type { AnimeEntry, AnimeStatus, EpisodeFav } from './types';
+
+// O sync do Chrome limita cada item a 8 KB e o total a 100 KB, então cada série
+// vai em uma chave própria e sem a capa (as URLs de imagem são longas).
+const SYNC_PREFIX = 'e:';
+
+function compact(entry: AnimeEntry): AnimeEntry {
+  const { coverUrl, ...rest } = entry;
+  return { ...rest, title: entry.title.slice(0, 90), ...(coverUrl && coverUrl.length < 160 ? { coverUrl } : {}) };
+}
 
 class StorageManager {
-  private cache: Map<string, AnimeEntry> = new Map();
-  private settingsCache: Settings | null = null;
+  private cache = new Map<string, AnimeEntry>();
+  private episodes = new Map<string, EpisodeFav>();
+  private settings: Settings = { ...DEFAULT_SETTINGS };
   private initialized = false;
+  // Identifica as gravações deste contexto: o onChanged também dispara para quem
+  // gravou, e reaplicar o próprio eco sobre o cache perderia alterações em voo.
+  private readonly writerId = Math.random().toString(36).slice(2);
+  private writeSeq = 0;
 
   async init(): Promise<void> {
     if (this.initialized) return;
-    
-    const [data, settings, synced] = await Promise.all([
-      chrome.storage.local.get(STORAGE_KEY),
-      chrome.storage.local.get(SETTINGS_KEY),
-      chrome.storage.sync.get([STORAGE_KEY, SETTINGS_KEY])
+    const data = await chrome.storage.local.get([
+      STORAGE_KEY, SETTINGS_KEY, EPISODES_KEY, LEGACY_STORAGE_KEY, LEGACY_SETTINGS_KEY
     ]);
-    
-    if (data[STORAGE_KEY]) {
-      Object.entries(data[STORAGE_KEY]).forEach(([key, value]) => {
-        const entry = value as AnimeEntry & { status?: string };
-        if (entry.status === 'plan_to_watch') entry.status = 'watch_later';
-        if (entry.status === 'favorite') {
-          entry.favorite = true;
-          entry.status = 'watch_later';
-        }
-        this.cache.set(key, entry as AnimeEntry);
-      });
-    }
-    
-    this.settingsCache = settings[SETTINGS_KEY] ? { ...DEFAULT_SETTINGS, ...settings[SETTINGS_KEY] } : DEFAULT_SETTINGS;
-    if (this.settingsCache.syncAcrossDevices && synced[STORAGE_KEY]) {
-      this.cache.clear();
-      Object.entries(synced[STORAGE_KEY]).forEach(([key, value]) => this.cache.set(key, value as AnimeEntry));
-      if (synced[SETTINGS_KEY]) this.settingsCache = { ...this.settingsCache, ...synced[SETTINGS_KEY] };
-    }
+
+    // Migração do nome antigo (CrunchyBoa) sem perder a biblioteca.
+    const entries = (data[STORAGE_KEY] ?? data[LEGACY_STORAGE_KEY] ?? {}) as Record<string, AnimeEntry>;
+    const storedSettings = (data[SETTINGS_KEY] ?? data[LEGACY_SETTINGS_KEY] ?? {}) as Partial<Settings>;
+    Object.entries(entries).forEach(([key, value]) => this.cache.set(key, this.normalize(value)));
+    Object.values((data[EPISODES_KEY] ?? {}) as Record<string, EpisodeFav>).forEach(fav => this.episodes.set(fav.id, fav));
+    this.settings = { ...DEFAULT_SETTINGS, ...storedSettings };
+
+    if (this.settings.syncAcrossDevices) await this.pullSync();
     this.initialized = true;
+    if (!data[STORAGE_KEY] && (data[LEGACY_STORAGE_KEY] || data[LEGACY_SETTINGS_KEY])) {
+      await this.flush();
+      await chrome.storage.local.remove([LEGACY_STORAGE_KEY, LEGACY_SETTINGS_KEY]);
+    }
+  }
+
+  /** Converte estados de versões antigas ('plan_to_watch', 'favorite' como status). */
+  private normalize(entry: AnimeEntry): AnimeEntry {
+    const legacy = entry as unknown as { status?: string };
+    if (legacy.status === 'plan_to_watch') entry.status = 'watch_later';
+    if (legacy.status === 'favorite') {
+      entry.favorite = true;
+      entry.status = 'watch_later';
+    }
+    return entry;
+  }
+
+  private async pullSync(): Promise<void> {
+    try {
+      const all = await chrome.storage.sync.get(null);
+      for (const [name, value] of Object.entries(all)) {
+        if (!name.startsWith(SYNC_PREFIX)) continue;
+        const remote = this.normalize(value as AnimeEntry);
+        const key = name.slice(SYNC_PREFIX.length);
+        const local = this.cache.get(key);
+        if (!local || remote.lastUpdated > local.lastUpdated) this.cache.set(key, { ...local, ...remote });
+      }
+    } catch {
+      // Sem sync disponível: segue só com os dados locais.
+    }
+  }
+
+  private pushSync(key: string, entry: AnimeEntry | null): void {
+    if (!this.settings.syncAcrossDevices) return;
+    const op = entry
+      ? chrome.storage.sync.set({ [SYNC_PREFIX + key]: compact(entry) })
+      : chrome.storage.sync.remove(SYNC_PREFIX + key);
+    op.catch(() => { /* cota do sync estourada: o dado local continua salvo */ });
+  }
+
+  private async flush(): Promise<void> {
+    await chrome.storage.local.set({
+      [STORAGE_KEY]: Object.fromEntries(this.cache),
+      [EPISODES_KEY]: Object.fromEntries(this.episodes),
+      [SETTINGS_KEY]: this.settings,
+      [WRITER_KEY]: `${this.writerId}:${++this.writeSeq}`
+    });
   }
 
   private ensureInit(): void {
-    if (!this.initialized) {
-      throw new Error('StorageManager not initialized. Call init() first.');
-    }
+    if (!this.initialized) throw new Error('StorageManager não inicializado. Chame init() primeiro.');
   }
 
   getKey(entry: Partial<AnimeEntry>): string {
     return `${entry.site}:${entry.id}`;
   }
 
-  async get(id: string): Promise<AnimeEntry | null> {
-    this.ensureInit();
-    return this.cache.get(id) || null;
-  }
+  /* ---- leitura síncrona (cache em memória) ---- */
+  peek(key: string): AnimeEntry | null { return this.cache.get(key) || null; }
+  list(): AnimeEntry[] { return Array.from(this.cache.values()); }
+  peekSettings(): Settings { return this.settings; }
+  peekEpisode(id: string): EpisodeFav | null { return this.episodes.get(id) || null; }
+  listEpisodes(): EpisodeFav[] { return Array.from(this.episodes.values()); }
 
-  async getAll(): Promise<AnimeEntry[]> {
-    this.ensureInit();
-    return Array.from(this.cache.values());
-  }
+  /* ---- leitura assíncrona ---- */
+  async get(key: string): Promise<AnimeEntry | null> { this.ensureInit(); return this.peek(key); }
+  async getAll(): Promise<AnimeEntry[]> { this.ensureInit(); return this.list(); }
+  async getSettings(): Promise<Settings> { this.ensureInit(); return this.settings; }
 
-  async getBySite(site: string): Promise<AnimeEntry[]> {
-    this.ensureInit();
-    return Array.from(this.cache.values()).filter(e => e.site === site);
-  }
-
-  async getByStatus(status: AnimeEntry['status']): Promise<AnimeEntry[]> {
-    this.ensureInit();
-    return Array.from(this.cache.values()).filter(e => e.status === status);
-  }
-
+  /* ---- escrita ---- */
   async set(entry: AnimeEntry): Promise<void> {
     this.ensureInit();
     const key = this.getKey(entry);
     entry.lastUpdated = Date.now();
     this.cache.set(key, entry);
-    
-    const obj: Record<string, AnimeEntry> = {};
-    this.cache.forEach((v, k) => { obj[k] = v; });
-    await chrome.storage.local.set({ [STORAGE_KEY]: obj });
-    if (this.settingsCache?.syncAcrossDevices) await chrome.storage.sync.set({ [STORAGE_KEY]: obj });
+    this.pushSync(key, entry);
+    await this.flush();
   }
 
-  async updateStatus(id: string, status: AnimeEntry['status'], episodesWatched?: number): Promise<AnimeEntry | null> {
+  async remove(key: string): Promise<void> {
     this.ensureInit();
-    const entry = this.cache.get(id);
-    if (!entry) return null;
-    
-    entry.status = status;
-    if (episodesWatched !== undefined) {
-      entry.episodesWatched = episodesWatched;
-    }
-    entry.lastUpdated = Date.now();
-    
-    await this.set(entry);
-    return entry;
+    this.cache.delete(key);
+    this.pushSync(key, null);
+    await this.flush();
   }
 
-  async incrementEpisode(id: string): Promise<AnimeEntry | null> {
+  async setEpisode(fav: EpisodeFav): Promise<void> {
     this.ensureInit();
-    const entry = this.cache.get(id);
-    if (!entry) return null;
-    
-    entry.episodesWatched = (entry.episodesWatched || 0) + 1;
-    if (entry.totalEpisodes && entry.episodesWatched >= entry.totalEpisodes) {
-      entry.status = 'watched';
-    } else if (entry.status === 'watch_later') {
-      entry.status = 'watching';
-    }
-    entry.lastUpdated = Date.now();
-    
-    await this.set(entry);
-    return entry;
+    this.episodes.set(fav.id, fav);
+    await this.flush();
   }
 
-  async remove(id: string): Promise<void> {
+  async removeEpisode(id: string): Promise<void> {
     this.ensureInit();
-    this.cache.delete(id);
-    
-    const obj: Record<string, AnimeEntry> = {};
-    this.cache.forEach((v, k) => { obj[k] = v; });
-    await chrome.storage.local.set({ [STORAGE_KEY]: obj });
-  }
-
-  async clear(): Promise<void> {
-    this.ensureInit();
-    this.cache.clear();
-    await chrome.storage.local.remove(STORAGE_KEY);
-  }
-
-  async getSettings(): Promise<Settings> {
-    this.ensureInit();
-    return this.settingsCache || DEFAULT_SETTINGS;
+    this.episodes.delete(id);
+    await this.flush();
   }
 
   async updateSettings(partial: Partial<Settings>): Promise<Settings> {
     this.ensureInit();
-    this.settingsCache = { ...this.settingsCache!, ...partial };
-    await chrome.storage.local.set({ [SETTINGS_KEY]: this.settingsCache });
-    if (this.settingsCache.syncAcrossDevices) {
-      const data: Record<string, AnimeEntry> = {};
-      this.cache.forEach((value, key) => { data[key] = value; });
-      await chrome.storage.sync.set({ [SETTINGS_KEY]: this.settingsCache, [STORAGE_KEY]: data });
+    this.settings = { ...this.settings, ...partial };
+    await this.flush();
+    if (partial.syncAcrossDevices) {
+      await this.pullSync();
+      this.cache.forEach((entry, key) => this.pushSync(key, entry));
     }
-    return this.settingsCache;
+    return this.settings;
+  }
+
+  /** Reage a gravações de outros contextos (popup, outras abas). */
+  subscribe(callback: () => void): void {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local' || !this.initialized) return;
+      const writer = changes[WRITER_KEY]?.newValue;
+      if (typeof writer === 'string' && writer.startsWith(this.writerId + ':')) return;
+      if (changes[STORAGE_KEY]) {
+        this.cache = new Map(Object.entries((changes[STORAGE_KEY].newValue || {}) as Record<string, AnimeEntry>));
+      }
+      if (changes[EPISODES_KEY]) {
+        this.episodes = new Map(Object.values((changes[EPISODES_KEY].newValue || {}) as Record<string, EpisodeFav>).map(f => [f.id, f]));
+      }
+      if (changes[SETTINGS_KEY]) this.settings = { ...DEFAULT_SETTINGS, ...(changes[SETTINGS_KEY].newValue || {}) };
+      callback();
+    });
   }
 
   async exportData(): Promise<string> {
     this.ensureInit();
-    const data = {
-      entries: Array.from(this.cache.entries()),
-      settings: this.settingsCache,
+    return JSON.stringify({
+      app: 'BOAnimes',
+      version: 2,
       exportedAt: Date.now(),
-      version: 1
-    };
-    return JSON.stringify(data, null, 2);
+      entries: Array.from(this.cache.entries()),
+      episodes: Array.from(this.episodes.values()),
+      settings: { ...this.settings, anilistClientId: '' }
+    }, null, 2);
   }
 
   async importData(json: string): Promise<number> {
     this.ensureInit();
-    const data = JSON.parse(json);
+    const data = JSON.parse(json) as { entries?: [string, AnimeEntry][]; episodes?: EpisodeFav[]; settings?: Partial<Settings> };
     let count = 0;
-    
-    if (data.entries && Array.isArray(data.entries)) {
-      for (const [key, entry] of data.entries) {
-        if (entry.status === 'plan_to_watch') entry.status = 'watch_later';
-        if (entry.status === 'favorite') {
-          entry.favorite = true;
-          entry.status = 'watch_later';
-        }
-        this.cache.set(key, entry);
-        count++;
-      }
-      const obj: Record<string, AnimeEntry> = {};
-      this.cache.forEach((v, k) => { obj[k] = v; });
-      await chrome.storage.local.set({ [STORAGE_KEY]: obj });
+    for (const [key, entry] of Array.isArray(data.entries) ? data.entries : []) {
+      this.cache.set(key, this.normalize(entry));
+      count += 1;
     }
-    
-    if (data.settings) {
-      this.settingsCache = { ...DEFAULT_SETTINGS, ...data.settings };
-      await chrome.storage.local.set({ [SETTINGS_KEY]: this.settingsCache });
-    }
-    
+    for (const fav of Array.isArray(data.episodes) ? data.episodes : []) this.episodes.set(fav.id, fav);
+    if (data.settings) this.settings = { ...this.settings, ...data.settings, anilistClientId: this.settings.anilistClientId };
+    await this.flush();
     return count;
   }
 }

@@ -1,5 +1,8 @@
 export type AnimeStatus = 'favorite' | 'watched' | 'watch_later' | 'watching';
 
+/** Listas do BOAnimes que têm uma Crunchylista nativa correspondente. */
+export type ListKey = 'favorite' | 'watch_later' | 'watching';
+
 export interface AnimeEntry {
   id: string;
   title: string;
@@ -7,47 +10,51 @@ export interface AnimeEntry {
   site: string;
   siteUrl: string;
   status: AnimeStatus;
+  /** Série favorita (separado dos episódios favoritos). */
   favorite?: boolean;
   episodesWatched?: number;
   totalEpisodes?: number;
   lastUpdated: number;
   notes?: string;
   anilistId?: number;
+  malId?: number;
   genres?: string[];
+  /** Crunchylistas nas quais a série já foi adicionada pelo BOAnimes. */
+  syncedLists?: ListKey[];
 }
 
-export interface SiteAdapter {
-  name: string;
-  matchUrl: RegExp;
-  getSeriesId: (url: string) => string | null;
-  getSeriesTitle: (doc: Document) => string | null;
-  getSeriesCover: (doc: Document) => string | null;
-  getEpisodeList: (doc: Document) => EpisodeInfo[];
-  getCurrentEpisode: (doc: Document) => EpisodeInfo | null;
-  injectUI: (container: HTMLElement, entry: AnimeEntry | null, onUpdate: (status: AnimeStatus) => void) => void;
-  observeMutations: (callback: () => void) => MutationObserver | null;
-}
-
-export interface EpisodeInfo {
-  number: number;
-  title?: string;
+/** Episódio favorito. Fica em um armazenamento próprio, separado das séries favoritas. */
+export interface EpisodeFav {
+  id: string;
+  seriesId: string;
+  seriesTitle: string;
+  title: string;
+  number?: number;
   url: string;
-  watched?: boolean;
+  thumb?: string;
+  addedAt: number;
 }
 
-export const STORAGE_KEY = 'crunchyboa_anime_data';
-export const SETTINGS_KEY = 'crunchyboa_settings';
+export const STORAGE_KEY = 'boanimes_data';
+export const SETTINGS_KEY = 'boanimes_settings';
+export const EPISODES_KEY = 'boanimes_episodes';
+export const WRITER_KEY = 'boanimes_writer';
+export const LEGACY_STORAGE_KEY = 'crunchyboa_anime_data';
+export const LEGACY_SETTINGS_KEY = 'crunchyboa_settings';
 
 export interface Settings {
-  enabledSites: string[];
   showBadges: boolean;
-  autoDetectCrunchyroll: boolean;
   syncAcrossDevices: boolean;
+  themeEnabled: boolean;
+  /** Cria/atualiza as Crunchylistas nativas Favoritas, Assistir Depois e Assistindo. */
+  syncCrunchylists: boolean;
+  anilistClientId: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  enabledSites: ['crunchyroll', 'animesorion', 'animesonlinecc', 'animefire', 'otakuflix', 'animesonehd'],
   showBadges: true,
-  autoDetectCrunchyroll: true,
-  syncAcrossDevices: false
+  syncAcrossDevices: false,
+  themeEnabled: true,
+  syncCrunchylists: true,
+  anilistClientId: ''
 };

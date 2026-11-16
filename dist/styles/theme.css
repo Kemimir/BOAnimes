@@ -1,0 +1,132 @@
+/*
+ * Tema BOAnimes — identidade própria sobre o site nativo da Crunchyroll.
+ *
+ * Regras da casa (desempenho primeiro):
+ *  - só CSS, nenhum script; tudo sob html:not(.boa-theme-off) para desligar na hora;
+ *  - nada de backdrop-filter, blur ou sombras grandes;
+ *  - animações apenas em opacity/transform/cor;
+ *  - seletores ancorados em classes estáveis (erc-*, header-*) e em data-t.
+ */
+
+html:not(.boa-theme-off) {
+  --boa-srf: #141821;
+  --boa-srf2: #1d2330;
+  --boa-line: rgba(255, 255, 255, .09);
+  --boa-txt2: #a9b0bf;
+  --boa-acc: #ff640a;
+  --boa-r: 10px;
+  color-scheme: dark;
+  scrollbar-color: #2a3142 #000;
+}
+
+/* O fundo preto do site fica como está: o hero e os degradês nativos são
+   pintados em preto fixo, e trocar a cor de base deixaria emendas visíveis. */
+html:not(.boa-theme-off) ::selection {
+  background: rgba(255, 100, 10, .35);
+  color: #fff;
+}
+
+/* ----- Header: barra flutuante em cápsula ----- */
+html:not(.boa-theme-off) .erc-large-header .header-content {
+  top: 4px;
+  height: 52px;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-width: 1560px;
+  margin-inline: auto;
+  border: 1px solid var(--boa-line);
+  border-radius: 16px;
+  background-color: var(--boa-srf);
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-logo {
+  padding-left: 6px;
+}
+
+html:not(.boa-theme-off) .erc-large-header .erc-header-tile {
+  border-radius: 10px;
+  transition: background-color .15s, color .15s;
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-nav .erc-header-tile {
+  margin-block: 6px;
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-actions .erc-header-tile {
+  margin: 5px 2px;
+}
+
+html:not(.boa-theme-off) .erc-large-header .erc-header-tile:hover,
+html:not(.boa-theme-off) .erc-large-header .erc-header-tile.state-active {
+  background-color: var(--boa-srf2);
+  color: #fff;
+}
+
+/* Jogos e Notícias continuam acessíveis, só saem do primeiro plano. */
+html:not(.boa-theme-off) .erc-large-header .header-external-links {
+  opacity: .55;
+  transition: opacity .15s;
+}
+
+html:not(.boa-theme-off) .erc-large-header .header-external-links:hover,
+html:not(.boa-theme-off) .erc-large-header .header-external-links:focus-within {
+  opacity: 1;
+}
+
+/* ----- Fileiras: título com marca lateral ----- */
+html:not(.boa-theme-off) h2[class*="feed-header__title"] {
+  position: relative;
+  padding-left: 14px;
+  letter-spacing: -.01em;
+}
+
+html:not(.boa-theme-off) h2[class*="feed-header__title"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .18em;
+  bottom: .18em;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--boa-acc);
+}
+
+/* ----- Cards de série ----- */
+html:not(.boa-theme-off) [data-t^="series-card"] > a[class*="poster-wrapper"] {
+  border-radius: var(--boa-r);
+  overflow: hidden;
+}
+
+html:not(.boa-theme-off) [data-t^="series-card"] > [data-t="hover-component"] {
+  border-radius: var(--boa-r);
+  overflow: hidden;
+}
+
+html:not(.boa-theme-off) div[class*="browse-card-hover__content--"] {
+  background-color: var(--boa-srf);
+  box-shadow: inset 0 0 0 1px var(--boa-line);
+}
+
+html:not(.boa-theme-off) [data-t^="series-card"] [data-t="meta-tags"] {
+  color: var(--boa-txt2);
+}
+
+/* ----- Cards de episódio ----- */
+html:not(.boa-theme-off) [data-t^="episode-card"] a[class*="thumbnail-wrapper"] {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ----- Página da série ----- */
+html:not(.boa-theme-off) [data-t="start-watching-btn"],
+html:not(.boa-theme-off) [data-t="add-to-watchlist-btn"][class*="button--"] {
+  border-radius: 999px;
+}
+
+/* ----- Rodapé: fora da tela não custa layout nem pintura ----- */
+html:not(.boa-theme-off) .erc-footer,
+html:not(.boa-theme-off) .cr-footer-seo-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}

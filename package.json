@@ -1,7 +1,7 @@
 {
-  "name": "crunchyboa",
+  "name": "boanimes",
   "version": "1.0.0",
-  "description": "CrunchyBoa - Melhora a interface da Crunchyroll e adiciona rastreamento de séries",
+  "description": "BOAnimes - Melhora a Crunchyroll e acompanha seus animes",
   "type": "module",
   "scripts": {
     "build": "node build.js",
