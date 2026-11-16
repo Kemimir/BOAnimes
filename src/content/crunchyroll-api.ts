@@ -203,6 +203,8 @@ export interface UpNext {
   playhead: number;
   durationMs: number;
   never: boolean;
+  seriesTitle?: string;
+  thumb?: string;
 }
 
 interface Panel {
@@ -211,6 +213,11 @@ interface Panel {
   title: string;
   images?: { thumbnail?: { width: number; source: string }[][] };
   episode_metadata?: { episode_number?: number; duration_ms?: number; series_id?: string; series_title?: string };
+}
+
+function bestThumb(panel: Panel): string | undefined {
+  const sizes = (panel.images?.thumbnail?.[0] || []).slice().sort((a, b) => a.width - b.width);
+  return (sizes.find(size => size.width >= 300) || sizes[sizes.length - 1])?.source;
 }
 
 /** O episódio que a conta deve assistir a seguir nesta série (ou o que está pela metade). */
@@ -226,7 +233,9 @@ export async function fetchUpNext(seriesId: string): Promise<UpNext | null> {
     number: item.panel.episode_metadata?.episode_number ?? null,
     playhead: item.playhead || 0,
     durationMs: item.panel.episode_metadata?.duration_ms || 0,
-    never: Boolean(item.never_watched)
+    never: Boolean(item.never_watched),
+    seriesTitle: item.panel.episode_metadata?.series_title,
+    thumb: bestThumb(item.panel)
   };
 }
 

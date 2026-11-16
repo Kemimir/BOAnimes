@@ -1,6 +1,6 @@
 import { storage } from '../shared/storage';
 import { AnimeEntry, AnimeStatus, EpisodeFav, NextEpisode } from '../shared/types';
-import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, syncEntryLists, UpNext } from './crunchyroll-api';
+import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
  * Integração do BOAnimes com a Crunchyroll.
@@ -265,6 +265,17 @@ const toNext = (next: UpNext): NextEpisode => ({
   never: next.never
 });
 
+/** Aplica a contagem da conta à série. Só promove o status; nunca rebaixa uma escolha manual. */
+function applyProgress(entry: AnimeEntry, progress: SeriesProgress): boolean {
+  let changed = false;
+  if (entry.totalEpisodes !== progress.total) { entry.totalEpisodes = progress.total; changed = true; }
+  if (entry.episodesWatched !== progress.watched) { entry.episodesWatched = progress.watched; changed = true; }
+  if (progress.watched > 0 && entry.status === 'watch_later') { entry.status = 'watching'; changed = true; }
+  if (progress.total > 0 && progress.watched >= progress.total && entry.status === 'watching') { entry.status = 'watched'; changed = true; }
+  entry.progressAt = Date.now();
+  return changed;
+}
+
 async function refreshProgress(): Promise<void> {
   const entry = page.entry;
   if (!entry) return;
@@ -277,13 +288,7 @@ async function refreshProgress(): Promise<void> {
     entry.nextAt = Date.now();
     if (!before || before.id !== next.id || Math.abs(before.playhead - next.playhead) > 5) changed = true;
   }
-  if (progress) {
-    if (entry.totalEpisodes !== progress.total) { entry.totalEpisodes = progress.total; changed = true; }
-    if (entry.episodesWatched !== progress.watched) { entry.episodesWatched = progress.watched; changed = true; }
-    // Só promove o status; nunca rebaixa uma escolha manual do usuário.
-    if (progress.watched > 0 && entry.status === 'watch_later') { entry.status = 'watching'; changed = true; }
-    if (progress.total > 0 && progress.watched >= progress.total && entry.status === 'watching') { entry.status = 'watched'; changed = true; }
-  }
+  if (progress && applyProgress(entry, progress)) changed = true;
   if (!changed) return;
   // Rascunho sem nada assistido continua só na memória, mas o contador aparece.
   if (page.draft && !(progress && progress.watched > 0)) paintGroup();
@@ -540,6 +545,8 @@ const HISTORY_KEY = 'boanimes_history_at';
 const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 const HISTORY_MAX_NEW = 15;
 const NEXT_TTL_MS = 10 * 60 * 1000;
+const PROGRESS_TTL_MS = 24 * 60 * 60 * 1000;
+const PLACEHOLDER_TITLE = /^(Série Crunchyroll|Unknown Series)$/i;
 let historyStarted = false;
 
 /**
@@ -603,10 +610,26 @@ async function refreshStaleNext(): Promise<void> {
   stale.forEach((entry, index) => {
     entry.nextAt = Date.now();
     const next = results[index];
-    if (next) entry.next = toNext(next);
+    if (!next) return;
+    entry.next = toNext(next);
+    // Repara entradas criadas por versões antigas sem título ou capa.
+    if (PLACEHOLDER_TITLE.test(entry.title) && next.seriesTitle) entry.title = next.seriesTitle;
+    if (!entry.coverUrl && next.thumb) entry.coverUrl = next.thumb;
   });
   await storage.setMany(stale);
   renderQuick();
+
+  // Contagens antigas (de versões que contavam pela tela) são refeitas aos poucos:
+  // no máximo duas séries por abertura do painel, e cada uma só uma vez por dia.
+  const outdated = stale.filter(entry => Date.now() - (entry.progressAt || 0) > PROGRESS_TTL_MS).slice(0, 2);
+  for (const entry of outdated) {
+    const progress = await fetchSeriesProgress(entry.id);
+    if (progress) applyProgress(entry, progress);
+  }
+  if (outdated.length) {
+    await storage.setMany(outdated);
+    renderQuick();
+  }
 }
 
 const clock = (seconds: number): string => {

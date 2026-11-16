@@ -25,6 +25,8 @@ export interface AnimeEntry {
   next?: NextEpisode;
   /** Quando `next` foi conferido pela última vez. */
   nextAt?: number;
+  /** Quando a contagem de episódios vistos foi conferida na conta pela última vez. */
+  progressAt?: number;
 }
 
 export interface NextEpisode {
