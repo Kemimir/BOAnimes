@@ -1,11 +1,11 @@
 /* Popup do BOAnimes. Sem blur, sem sombras grandes: abre instantâneo. */
 :root {
-  --bg: #0b0d12;
-  --srf: #141821;
-  --srf2: #1d2330;
+  --bg: #000000;
+  --srf: #0a0a0a;
+  --srf2: #171717;
   --line: rgba(255, 255, 255, .09);
   --txt: #f1f2f5;
-  --txt2: #a9b0bf;
+  --txt2: #a8a8a8;
   --acc: #ff640a;
   color-scheme: dark;
 }

@@ -9,14 +9,14 @@
  */
 
 html:not(.boa-theme-off) {
-  --boa-srf: #141821;
-  --boa-srf2: #1d2330;
+  --boa-srf: #0a0a0a;
+  --boa-srf2: #171717;
   --boa-line: rgba(255, 255, 255, .09);
-  --boa-txt2: #a9b0bf;
+  --boa-txt2: #a8a8a8;
   --boa-acc: #ff640a;
   --boa-r: 10px;
   color-scheme: dark;
-  scrollbar-color: #2a3142 #000;
+  scrollbar-color: #333333 #000;
 }
 
 /* O fundo preto do site fica como está: o hero e os degradês nativos são
@@ -191,24 +191,29 @@ html:not(.boa-theme-off) div[class*="broadcast-message__close--"] svg {
 
 /* ----- Fileiras de séries: grade de 2 linhas com cards compactos ----- */
 /* Cada série vira um retângulo: arte quadrada, título, idiomas e os botões
-   (nativos + BOAnimes) sempre visíveis, sem depender do hover. A fileira rola na
-   horizontal; só valem para carrosséis de séries (os de episódio ficam como estão). */
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"]:has([data-t^="series-card"]) [class*="carousel-scroller__wrapper"] {
-  overflow-x: auto !important;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #2a3142 transparent;
-  padding-bottom: 6px;
-}
-
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"]:has([data-t^="series-card"]),
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"]:has([data-t^="series-card"]) [class*="carousel-scroller"]:not([data-t="carousel-card-wrapper"]) {
+   (nativos + BOAnimes) sempre visíveis, sem depender do hover. Só vale para fileiras
+   que a extensão marcou com data-boa-grid (carrosséis de séries); as de episódio
+   ficam como estão. A marca é posta uma vez por fileira: nada de :has(), que forçaria
+   o navegador a reavaliar estilos a cada card carregado na rolagem. */
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] {
   height: auto !important;
   max-height: none !important;
 }
 
-/* O deslocamento por transform era do JS das setas; a rolagem agora é nativa. */
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"]:has([data-t^="series-card"]) [data-t="cards"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [class*="carousel-scroller__wrapper"] {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  height: auto !important;
+  max-height: none !important;
+}
+
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [class*="carousel-scroller__wrapper"]::-webkit-scrollbar {
+  display: none;
+}
+
+/* O deslocamento por transform era do JS das setas nativas; a rolagem agora é nativa. */
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t="cards"] {
   display: grid !important;
   grid-auto-flow: column;
   grid-template-rows: repeat(2, 126px) !important;
@@ -219,12 +224,14 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"]:has([data-t^="se
   transition: none !important;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel"]:has([data-t^="series-card"]) [data-t="left-arrow"],
-html:not(.boa-theme-off) [class*="cards-carousel"]:has([data-t^="series-card"]) [data-t="right-arrow"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid-root] [data-t="left-arrow"],
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid-root] [data-t="right-arrow"] {
   display: none !important;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t="carousel-card-wrapper"]:has([data-t^="series-card"]) {
+/* Cards fora da tela não são estilizados, medidos nem pintados: é o que mantém a
+   rolagem com carregamento infinito fluida numa página com dezenas de milhares de nós. */
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t="carousel-card-wrapper"] {
   display: block;
   align-self: stretch;
   width: auto !important;
@@ -232,9 +239,11 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t="carouse
   min-width: 0;
   margin: 0 !important;
   padding: 0 !important;
+  content-visibility: auto;
+  contain-intrinsic-size: 340px 126px;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] {
   position: relative;
   display: grid;
   grid-template-columns: 72px 1fr;
@@ -248,20 +257,19 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series
   border: 1px solid var(--boa-line);
   border-radius: 12px;
   background: var(--boa-srf);
-  transition: border-color .15s, background-color .15s;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"]:hover {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"]:hover {
   border-color: rgba(255, 100, 10, .45);
-  background: #1a2030;
+  background: var(--boa-srf2);
 }
 
 /* marcador vazio que o site coloca antes da arte */
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] > div:first-child:not([class*="browse-card"]) {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > div:first-child:not([class*="browse-card"]) {
   display: none;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__poster-wrapper"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > a[class*="poster-wrapper"] {
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: start;
@@ -271,22 +279,19 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series
   overflow: hidden;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__poster-wrapper"] [class*="content-image"] {
-  height: 100% !important;
-}
-
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__poster-wrapper"] [class*="figure-sizer"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > a[class*="poster-wrapper"] [class*="content-image"],
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > a[class*="poster-wrapper"] [class*="figure-sizer"] {
   height: 100% !important;
   padding: 0 !important;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__poster-wrapper"] img {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > a[class*="poster-wrapper"] img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__body"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > div[class*="browse-card__body"] {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
@@ -294,7 +299,7 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series
   overflow: hidden;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card__title"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] [class*="browse-card__title"] {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -305,16 +310,16 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series
 }
 
 /* Painel de hover: o painel grande some, mas a faixa de botões fica sempre à mostra. */
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [data-t="hover-component"],
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card-hover__content"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > [data-t="hover-component"],
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > [data-t="hover-component"] > [class*="browse-card-hover__content"] {
   display: contents;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card-hover__content"] > *:not([class*="browse-card-hover__footer"]) {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] > [data-t="hover-component"] > [class*="browse-card-hover__content"] > *:not([class*="browse-card-hover__footer"]) {
   display: none !important;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card-hover__footer"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] [class*="browse-card-hover__footer"] {
   grid-column: 2;
   grid-row: 2;
   display: flex;
@@ -324,6 +329,13 @@ html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series
   padding: 0;
 }
 
-html:not(.boa-theme-off) [class*="cards-carousel__cards-frame"] [data-t^="series-card"] [class*="browse-card-hover__footer-icon"] {
+html:not(.boa-theme-off):not(.boa-grid-off) [data-boa-grid] [data-t^="series-card"] [class*="browse-card-hover__footer-icon"] {
   margin: 0 !important;
+}
+
+/* ----- Player largo: usa a maior altura que cabe, sem perder os controles ----- */
+/* No site a altura do player é "100vh - 250px"; aqui sobe para a janela inteira
+   abaixo do header ou, em janelas muito largas, para a proporção 16:9 da largura. */
+html:not(.boa-theme-off).boa-wide-player .video-player-wrapper {
+  height: min(56.25vw, calc(100vh - 60px)) !important;
 }

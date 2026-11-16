@@ -119,7 +119,7 @@
   transform: translateX(-50%);
   padding: 10px 16px;
   border-radius: 4px;
-  background: #23252b;
+  background: #0f0f0f;
   color: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
   font: 500 14px/1.3 DMSans, 'Helvetica Neue', Helvetica, sans-serif;
@@ -176,7 +176,7 @@
   max-width: calc(100vw - 24px);
   border: 1px solid rgba(255, 255, 255, .09);
   border-radius: 14px;
-  background: #141821;
+  background: #0a0a0a;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
   color: #fff;
   font: 14px/1.35 DMSans, 'Helvetica Neue', Helvetica, sans-serif;
@@ -199,7 +199,7 @@
   border: 0;
   border-radius: 8px;
   background: none;
-  color: #a9b0bf;
+  color: #a8a8a8;
   font: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -212,7 +212,7 @@
 }
 
 .boa-quick-tab[aria-selected="true"] {
-  background: #1d2330;
+  background: #171717;
   color: #ff640a;
 }
 
@@ -235,7 +235,7 @@
 
 .boa-quick-item:hover,
 .boa-quick-item:focus-visible {
-  background: #1d2330;
+  background: #171717;
   outline: 0;
 }
 
@@ -244,7 +244,7 @@
   width: 40px;
   height: 56px;
   border-radius: 6px;
-  background: #1d2330;
+  background: #171717;
   object-fit: cover;
 }
 
@@ -262,14 +262,14 @@
 }
 
 .boa-quick-detail {
-  color: #a9b0bf;
+  color: #a8a8a8;
   font-size: 12px;
 }
 
 .boa-quick-empty {
   margin: 0;
   padding: 22px 14px;
-  color: #a9b0bf;
+  color: #a8a8a8;
   text-align: center;
 }
 
@@ -335,4 +335,217 @@
 
 .boa-quick-count[hidden] {
   display: none;
+}
+
+/* ----- Setas laterais das fileiras em grade (no lugar das barras de rolagem) ----- */
+[data-boa-grid] {
+  position: relative;
+}
+
+.boa-row-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .88);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity .15s, background-color .15s;
+}
+
+.boa-row-prev { left: 6px; }
+.boa-row-next { right: 6px; }
+.boa-row-prev svg { transform: scaleX(-1); }
+
+.boa-row-arrow svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+[data-boa-grid]:hover .boa-row-arrow {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[data-boa-grid][data-boa-start="1"] .boa-row-prev,
+[data-boa-grid][data-boa-end="1"] .boa-row-next {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.boa-row-arrow:hover {
+  background: #ff640a;
+  color: #1c0f04;
+}
+
+/* ----- Setinha de detalhes nos cards ----- */
+.boa-detail-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .85);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+
+.boa-detail-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+[data-t^="series-card"]:hover .boa-detail-btn,
+.boa-detail-btn:focus-visible {
+  opacity: 1;
+}
+
+.boa-detail-btn:hover {
+  color: #ff640a;
+}
+
+/* ----- Card de detalhes (popup) ----- */
+.boa-detail {
+  position: fixed;
+  z-index: 2147483000;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+  width: min(520px, calc(100vw - 24px));
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: #0a0a0a;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .7);
+  color: #fff;
+  font: 14px/1.4 DMSans, 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+.boa-detail-cover {
+  display: block;
+  width: 132px;
+  height: 190px;
+  border-radius: 10px;
+  background: #171717;
+  object-fit: cover;
+}
+
+.boa-detail-body {
+  min-width: 0;
+}
+
+.boa-detail-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.boa-detail-facts {
+  margin: 0 0 8px;
+  color: #a8a8a8;
+  font-size: 12px;
+}
+
+.boa-detail-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 12px;
+  color: #e6e6e6;
+  font-size: 13px;
+}
+
+.boa-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.boa-detail-open,
+.boa-detail-pill {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 8px;
+  background: #171717;
+  color: #fff;
+  font: 600 12px/1.2 DMSans, 'Helvetica Neue', Helvetica, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boa-detail-open {
+  border-color: transparent;
+  background: #ff640a;
+  color: #1c0f04;
+}
+
+.boa-detail-pill:hover {
+  border-color: rgba(255, 100, 10, .6);
+}
+
+.boa-detail-pill[aria-pressed="true"] {
+  border-color: #ff640a;
+  color: #ff640a;
+}
+
+/* ----- Chaves de exibição no rodapé do painel rápido ----- */
+.boa-quick-foot {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, .09);
+}
+
+.boa-quick-switch {
+  flex: 1 1 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 8px;
+  background: none;
+  color: #a8a8a8;
+  font: 600 12px/1.2 DMSans, 'Helvetica Neue', Helvetica, sans-serif;
+  cursor: pointer;
+}
+
+.boa-quick-switch:hover {
+  color: #fff;
+}
+
+.boa-quick-switch[aria-checked="true"] {
+  border-color: rgba(255, 100, 10, .6);
+  color: #ff640a;
+}
+
+/* Com a grade desligada (ou o tema desligado) a fileira volta ao layout original do
+   site, então as setas e a setinha de detalhes da extensão não devem aparecer. */
+html.boa-grid-off .boa-row-arrow,
+html.boa-theme-off .boa-row-arrow,
+html.boa-grid-off .boa-detail-btn,
+html.boa-theme-off .boa-detail-btn {
+  display: none !important;
 }

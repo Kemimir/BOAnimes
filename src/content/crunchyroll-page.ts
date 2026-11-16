@@ -1,5 +1,7 @@
 import { storage } from '../shared/storage';
 import { AnimeEntry, AnimeStatus, EpisodeFav, NextEpisode } from '../shared/types';
+import { closeDetail, DetailHooks, openDetail } from './detail';
+import { ensureRowArrows } from './rows';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
@@ -17,10 +19,14 @@ const SYNC_DELAY = 300;
 const SERIES_TABS: AnimeStatus[] = ['favorite', 'watch_later', 'watching', 'watched'];
 
 /** Chave de um botão do grupo: os quatro estados da série mais o episódio favorito. */
-type ButtonKey = AnimeStatus | 'episode';
+type ButtonKey = AnimeStatus | 'episode' | 'wide';
 
 // [contorno, preenchido] — ícones Material, viewBox 24.
 const ICONS: Record<ButtonKey, [string, string]> = {
+  wide: [
+    'M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z',
+    'M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z'
+  ],
   favorite: [
     'M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z',
     'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'
@@ -45,6 +51,7 @@ const ICONS: Record<ButtonKey, [string, string]> = {
 
 // [rótulo quando inativo, rótulo quando ativo]
 const LABELS: Record<ButtonKey, [string, string]> = {
+  wide: ['Player largo', 'Player normal'],
   favorite: ['Favoritar série', 'Remover série das favoritas'],
   episode: ['Favoritar este episódio', 'Remover episódio dos favoritos'],
   watch_later: ['Assistir depois', 'Em Assistir depois'],
@@ -183,7 +190,7 @@ function buildGroup(kind: PageKind): HTMLElement {
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', 'BOAnimes');
   group.appendChild(element('span', 'boa-divider'));
-  const keys: ButtonKey[] = kind === 'watch' ? ['episode', ...SERIES_TABS] : SERIES_TABS;
+  const keys: ButtonKey[] = kind === 'watch' ? ['wide', 'episode', ...SERIES_TABS] : SERIES_TABS;
   for (const buttonKey of keys) group.appendChild(createButton(buttonKey, 'boa-icon-btn'));
   group.appendChild(element('span', 'boa-progress'));
   group.addEventListener('click', event => {
@@ -193,6 +200,7 @@ function buildGroup(kind: PageKind): HTMLElement {
     event.stopPropagation();
     const buttonKey = button.dataset.status as ButtonKey;
     if (buttonKey === 'episode') void toggleEpisodeFav();
+    else if (buttonKey === 'wide') void toggleSetting('widePlayer');
     else void updateStatus(buttonKey);
   });
   return group;
@@ -203,9 +211,11 @@ function paintGroup(): void {
   if (!group) return;
   group.querySelectorAll<HTMLElement>('.boa-icon-btn').forEach(button => {
     const buttonKey = button.dataset.status as ButtonKey;
-    const active = buttonKey === 'episode'
-      ? Boolean(episode && storage.peekEpisode(episode.id))
-      : isActive(entry, buttonKey);
+    const active = buttonKey === 'wide'
+      ? storage.peekSettings().widePlayer
+      : buttonKey === 'episode'
+        ? Boolean(episode && storage.peekEpisode(episode.id))
+        : isActive(entry, buttonKey);
     paintButton(button, buttonKey, active);
   });
   const watched = entry?.episodesWatched || 0;
@@ -418,6 +428,60 @@ function cardEpisode(card: Element): EpisodeFav | null {
   };
 }
 
+async function toggleSetting(name: 'compactGrid' | 'widePlayer'): Promise<void> {
+  await storage.updateSettings({ [name]: !storage.peekSettings()[name] });
+  paintGroup();
+  renderQuick();
+}
+
+/** Aplica uma ação da extensão à série de um card (usado pelo card de detalhes). */
+async function applyCardStatus(card: Element, which: AnimeStatus): Promise<void> {
+  if (which === 'watch_later') return toggleWatchLater(card);
+  const info = cardInfo(card);
+  if (!info) return;
+  const entry: AnimeEntry = storage.peek(key(info.id)) || {
+    ...info, site: SITE, siteUrl: window.location.origin, status: 'watch_later', episodesWatched: 0, lastUpdated: Date.now()
+  };
+  if (which === 'favorite') entry.favorite = !entry.favorite;
+  else entry.status = which;
+  await commit(entry);
+  showToast(which === 'favorite' ? (entry.favorite ? 'Série adicionada às favoritas' : 'Série removida das favoritas') : `Status: ${STATUS_NAMES[which]}`);
+}
+
+const detailHooks: DetailHooks = {
+  state(seriesId) {
+    const entry = storage.peek(key(seriesId));
+    return { favorite: Boolean(entry?.favorite), status: entry?.status ?? null };
+  },
+  apply: applyCardStatus
+};
+
+const CHEVRON_UP = 'M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z';
+
+/** Setinha "mais detalhes" nos cards das fileiras em grade, criada só no primeiro hover. */
+function onSeriesHover(event: Event): void {
+  const card = (event.target as Element).closest?.('[data-boa-grid] [data-t^="series-card"]');
+  if (!card || card.querySelector(':scope > .boa-detail-btn')) return;
+  const button = element('button', 'boa-detail-btn');
+  button.type = 'button';
+  button.title = 'Mais detalhes';
+  button.setAttribute('aria-label', 'Mais detalhes');
+  button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${CHEVRON_UP}"/></svg>`;
+  button.addEventListener('click', clickEvent => {
+    if (!clickEvent.isTrusted) return;
+    clickEvent.preventDefault();
+    clickEvent.stopPropagation();
+    openDetail(card, detailHooks);
+  });
+  card.appendChild(button);
+}
+
+function onPointerOver(event: Event): void {
+  if (!(event.target instanceof Element)) return;
+  onSeriesHover(event);
+  onEpisodeHover(event);
+}
+
 /** Botão de coração em cada card de episódio, criado só quando o mouse chega nele. */
 function onEpisodeHover(event: Event): void {
   if (page.kind !== 'series') return;
@@ -514,16 +578,83 @@ async function toggleWatchLater(card: Element): Promise<void> {
   }
 }
 
-function decorateCards(): void {
-  document.querySelectorAll('[data-t^="series-card"]:not([data-boa])').forEach(card => {
-    card.setAttribute('data-boa', '1');
-    paintBadge(card);
-  });
+const FRAME_SELECTOR = '[class*="cards-carousel__cards-frame"]';
+
+/** Marca a fileira como "de séries" uma única vez; o CSS usa a marca no lugar de :has(). */
+function markGridFrame(card: Element): void {
+  const frame = card.closest(FRAME_SELECTOR);
+  if (!frame || frame.hasAttribute('data-boa-grid')) return;
+  frame.setAttribute('data-boa-grid', '1');
+  // O contêiner com as setas nativas fica dois níveis acima da faixa de cards.
+  frame.parentElement?.parentElement?.setAttribute('data-boa-grid-root', '1');
+  ensureRowArrows(frame);
+}
+
+function decorateCard(card: Element): void {
+  if (card.hasAttribute('data-boa')) return;
+  card.setAttribute('data-boa', '1');
+  markGridFrame(card);
+  paintBadge(card);
+}
+
+function decorateFooter(footer: Element): void {
+  if (footer.hasAttribute('data-boa')) return;
+  footer.setAttribute('data-boa', '1');
+  mountCardButton(footer);
+}
+
+const CARD_SELECTOR = '[data-t^="series-card"]:not([data-boa])';
+const FOOTER_SELECTOR = '[data-t="hover-component"] [class*="hover__footer--"]:not([data-boa])';
+
+/** Decora só o que está dentro de `root` (e ele mesmo), nunca a página inteira. */
+function decorateIn(root: Element | Document): void {
+  if (root instanceof Element) {
+    if (root.matches(CARD_SELECTOR)) decorateCard(root);
+    if (root.matches(FOOTER_SELECTOR)) decorateFooter(root);
+  }
+  root.querySelectorAll(CARD_SELECTOR).forEach(decorateCard);
   // O painel de hover pode ser montado depois do card, então é tratado à parte.
-  document.querySelectorAll('[data-t="hover-component"] [class*="hover__footer--"]:not([data-boa])').forEach(footer => {
-    footer.setAttribute('data-boa', '1');
-    mountCardButton(footer);
-  });
+  root.querySelectorAll(FOOTER_SELECTOR).forEach(decorateFooter);
+}
+
+// Nós adicionados ao DOM esperando decoração. A fila é esvaziada em tempo ocioso,
+// em fatias, para a rolagem com carregamento infinito nunca ficar presa na extensão.
+const addedQueue = new Set<Element>();
+let decorateHandle = 0;
+const SLICE_BUDGET_MS = 8;
+
+function runDecorateSlice(deadline?: IdleDeadline): void {
+  decorateHandle = 0;
+  const started = performance.now();
+  for (const node of addedQueue) {
+    addedQueue.delete(node);
+    if (node.isConnected) decorateIn(node);
+    const spent = performance.now() - started;
+    const budgetLeft = deadline ? deadline.timeRemaining() > 2 : spent < SLICE_BUDGET_MS;
+    if (!budgetLeft) break;
+  }
+  if (addedQueue.size) scheduleDecorate();
+}
+
+function scheduleDecorate(): void {
+  if (decorateHandle) return;
+  decorateHandle = typeof requestIdleCallback === 'function'
+    ? requestIdleCallback(runDecorateSlice, { timeout: 400 })
+    : window.setTimeout(runDecorateSlice, 60);
+}
+
+function onMutations(records: MutationRecord[]): void {
+  for (const record of records) {
+    record.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      const element = node as Element;
+      // As inserções da própria extensão não precisam ser reprocessadas.
+      if (typeof element.className === 'string' && element.className.startsWith('boa-')) return;
+      addedQueue.add(element);
+    });
+  }
+  if (addedQueue.size) scheduleDecorate();
+  scheduleSync();
 }
 
 function repaintAll(): void {
@@ -709,7 +840,14 @@ function toggleQuick(wrap: HTMLElement, button: HTMLElement): void {
   }
   quickPanel = element('div', 'boa-quick-panel');
   quickPanel.addEventListener('click', event => {
-    const tab = (event.target as Element).closest<HTMLElement>('.boa-quick-tab');
+    const target = event.target as Element;
+    const switcher = target.closest<HTMLElement>('.boa-quick-switch');
+    if (switcher) {
+      event.stopPropagation();
+      void toggleSetting(switcher.dataset.setting as 'compactGrid' | 'widePlayer');
+      return;
+    }
+    const tab = target.closest<HTMLElement>('.boa-quick-tab');
     if (!tab) return;
     // O painel é redesenhado e o botão clicado sai do DOM; sem isto o ouvinte global acharia que o clique foi fora.
     event.stopPropagation();
@@ -802,7 +940,17 @@ function renderQuick(): void {
       list.appendChild(quickItem(`${prefix}/series/${entry.id}`, entry.title, detail, entry.coverUrl));
     }
   }
-  panel.replaceChildren(tabs, list);
+  const foot = element('div', 'boa-quick-foot');
+  const settings = storage.peekSettings();
+  for (const [setting, label] of [['compactGrid', 'Fileiras compactas'], ['widePlayer', 'Player largo']] as const) {
+    const toggle = element('button', 'boa-quick-switch', label);
+    toggle.type = 'button';
+    toggle.dataset.setting = setting;
+    toggle.setAttribute('role', 'switch');
+    toggle.setAttribute('aria-checked', String(Boolean(settings[setting])));
+    foot.appendChild(toggle);
+  }
+  panel.replaceChildren(tabs, list, foot);
 }
 
 /* ---------- ciclo ---------- */
@@ -812,10 +960,11 @@ function sync(): void {
   if (window.location.pathname !== lastPath) {
     lastPath = window.location.pathname;
     page.group?.remove();
+    closeDetail();
     page = freshPage(pageKind());
+    decorateIn(document);
   }
   mountQuickAccess();
-  decorateCards();
   if (page.kind === 'series') syncSeries();
   else if (page.kind === 'watch') syncWatch();
 }
@@ -826,9 +975,10 @@ function scheduleSync(): void {
 
 export function initCrunchyroll(): void {
   sync();
-  new MutationObserver(scheduleSync).observe(document.body, { childList: true, subtree: true });
+  decorateIn(document);
+  new MutationObserver(onMutations).observe(document.body, { childList: true, subtree: true });
   window.addEventListener('popstate', scheduleSync);
-  document.addEventListener('pointerover', onEpisodeHover, { passive: true });
+  document.addEventListener('pointerover', onPointerOver, { passive: true });
   storage.subscribe(repaintAll);
   window.setTimeout(() => void importHistory(), 2500);
 }

@@ -66,6 +66,10 @@ export interface Settings {
   /** Cria/atualiza as Crunchylistas nativas Favoritas, Assistir Depois e Assistindo. */
   syncCrunchylists: boolean;
   anilistClientId: string;
+  /** Fileiras de séries em grade compacta (desligado = layout original do site). */
+  compactGrid: boolean;
+  /** Player da página do episódio o mais largo que couber. */
+  widePlayer: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -73,5 +77,7 @@ export const DEFAULT_SETTINGS: Settings = {
   syncAcrossDevices: false,
   themeEnabled: true,
   syncCrunchylists: true,
-  anilistClientId: ''
+  anilistClientId: '',
+  compactGrid: true,
+  widePlayer: false
 };
