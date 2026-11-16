@@ -135,9 +135,13 @@ Proyecto de fan. No está afiliado, aprobado ni mantenido por Crunchyroll ni por
 **Código remoto:** não. Todo o código está no pacote. Nenhum `eval`, nenhum script carregado de fora.
 
 **Declaração de uso de dados (marque conforme o painel):**
-- Informações de autenticação: **sim**, apenas o token do AniList que o usuário escolhe conectar, guardado localmente e enviado só ao AniList.
-- Atividade do usuário / conteúdo do site: **sim**, títulos e progresso de séries e episódios, guardados localmente.
-- Informações pessoais identificáveis, saúde, finanças, localização, comunicações, histórico web geral: **não**.
+
+"Coletar" = enviar o dado para fora do dispositivo. O que fica só no navegador (biblioteca, progresso, ajustes) não conta.
+
+- Informações de autenticação (Authentication information): **sim** — o token do AniList que o usuário escolhe conectar, enviado só ao AniList.
+- Conteúdo do site (Website content): **sim, por prudência** — títulos e episódio enviados ao AniList a pedido do usuário. Se o painel deixar claro que só vale para o que o usuário não escolhe enviar, pode desmarcar.
+- Atividade do usuário (User activity: cliques, rolagem, digitação, monitoramento de rede): **não**. A extensão não registra isso.
+- Informações pessoais identificáveis, histórico de navegação, saúde, finanças, localização, comunicações: **não**.
 - Certifique que os dados **não** são vendidos, **não** são usados fora da finalidade da extensão e **não** são usados para crédito ou empréstimo.
 
 ## Instruções para o revisor (aba "Test instructions")
