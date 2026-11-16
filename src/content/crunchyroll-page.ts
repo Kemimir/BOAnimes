@@ -6,6 +6,7 @@ import { ensureRowArrows } from './rows';
 import { applyPlayer, buildPlayerButton } from './player';
 import { onSkipped } from './autoskip';
 import { t } from '../shared/i18n';
+import { applyFlags } from './flags';
 import { fetchRecentHistory, fetchSeriesProgress, fetchUpNext, isLoggedIn, setListEventHandler, SeriesProgress, syncEntryLists, UpNext } from './crunchyroll-api';
 
 /**
@@ -1046,6 +1047,7 @@ function tick(): void {
   tickTimer = 0;
   if (!document.hidden) {
     // Cada parte roda isolada: um erro em uma não pode parar o ciclo nem as outras.
+    guarded(() => applyFlags(storage.peekSettings()));
     guarded(sync);
     guarded(() => { backlog = decorateIn(document); });
     guarded(() => runLite(storage.peekSettings().liteMode));
