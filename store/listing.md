@@ -1,4 +1,4 @@
-# Chrome Web Store — material da listagem (BOAnimes 2.14.0)
+# Chrome Web Store — material da listagem (BOAnimes 2.16.0)
 
 Tudo aqui é para copiar e colar no Developer Dashboard. Os limites de tamanho foram conferidos.
 
@@ -30,7 +30,7 @@ Tudo aqui é para copiar e colar no Developer Dashboard. Os limites de tamanho f
 BOAnimes é uma extensão **não oficial** feita por um fã para deixar a Crunchyroll mais leve, bonita e fácil de usar, e para acompanhar o que você assiste.
 
 **Visual**
-• Tema preto com detalhes em laranja
+• Tema preto com a cor de destaque que você escolher: vermelho RedRat (padrão), laranja original e mais 6 cores
 • Fileiras em grade compacta, com cards transparentes e botões só no hover
 • Cabeçalho sem barra, com botão "+" e menu da conta compacto
 • Barras de progresso nos pôsteres e lista rápida (Assistindo, Depois, Séries, Episódios)
@@ -60,7 +60,7 @@ Projeto de fã. Não é afiliado, aprovado nem mantido pela Crunchyroll nem pelo
 BOAnimes is an **unofficial** fan-made extension that makes Crunchyroll lighter, better looking and easier to use, and helps you keep track of what you watch.
 
 **Look**
-• Black theme with orange accents
+• Black theme with the accent color you pick: RedRat red (default), original orange and 6 more colors
 • Compact grid rows with see-through cards and buttons only on hover
 • A header without a bar, a "+" button and a compact account menu
 • Progress bars on posters and a quick list (Watching, Later, Series, Episodes)
@@ -90,7 +90,7 @@ Fan project. Not affiliated with, endorsed by or maintained by Crunchyroll or An
 BOAnimes es una extensión **no oficial** creada por un fan para que Crunchyroll sea más ligera, bonita y fácil de usar, y para llevar el seguimiento de lo que ves.
 
 **Aspecto**
-• Tema negro con detalles naranja
+• Tema negro con el color de acento que elijas: rojo RedRat (por defecto), naranja original y 6 colores más
 • Filas en cuadrícula compacta, con tarjetas transparentes y botones solo al pasar el ratón
 • Cabecera sin barra, botón "+" y menú de cuenta compacto
 • Barras de progreso en los pósters y lista rápida (Viendo, Después, Series, Episodios)

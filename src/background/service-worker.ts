@@ -1,4 +1,5 @@
 import { LanguagePreference, setLanguage, t } from '../shared/i18n';
+import { SyncRequest, syncProgress } from '../shared/anilist-sync';
 
 const CR_PATTERN = '*://*.crunchyroll.com/*';
 
@@ -30,6 +31,14 @@ async function createMenus(): Promise<void> {
 chrome.runtime.onInstalled.addListener(() => void createMenus());
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.boanimes_settings) void createMenus();
+});
+
+// A página da Crunchyroll pede o envio do progresso para o AniList (se a conta estiver conectada).
+chrome.runtime.onMessage.addListener((message: { type?: string } & Partial<SyncRequest>, _sender, sendResponse) => {
+  if (message?.type !== 'ANILIST_SYNC') return false;
+  void syncProgress({ id: String(message.id || ''), title: String(message.title || ''), watched: Number(message.watched) || 0 })
+    .then(sendResponse);
+  return true;
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {

@@ -7,8 +7,10 @@
  * ciclo da extensão (comparação barata: só escreve quando algo difere).
  */
 import { Settings } from '../shared/types';
+import { setRedRat } from './redrat';
+import { applyAccent } from '../shared/accent';
 
-type Flags = Partial<Pick<Settings, 'themeEnabled' | 'compactGrid' | 'widePlayer' | 'liteMode' | 'enabled'>>;
+type Flags = Partial<Pick<Settings, 'themeEnabled' | 'accent' | 'compactGrid' | 'widePlayer' | 'liteMode' | 'enabled'>>;
 
 let debug = new Set<string>();
 try {
@@ -34,6 +36,8 @@ function write(): void {
     ['boa-nocv', debug.has('nocv')]
   ];
   for (const [name, on] of wanted) if (classes.contains(name) !== on) classes.toggle(name, on);
+  setRedRat(!wanted[0][1]);
+  applyAccent(current?.accent);
   const data: Array<[string, string | null]> = [
     // boaOff só vem da chave de diagnóstico: a chave geral não impede a extensão de iniciar,
     // para ela poder ser religada sem recarregar a página.
@@ -62,5 +66,5 @@ let watching = false;
 export function watchRoot(): void {
   if (watching) return;
   watching = true;
-  new MutationObserver(() => write()).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-boa-off', 'data-boa-no-js', 'data-boa-no-lite', 'data-boa-no-defer'] });
+  new MutationObserver(() => write()).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-boa-off', 'data-boa-no-js', 'data-boa-no-lite', 'data-boa-no-defer'] });
 }

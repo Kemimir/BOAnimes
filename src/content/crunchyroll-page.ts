@@ -292,6 +292,19 @@ function applyProgress(entry: AnimeEntry, progress: SeriesProgress): boolean {
   return changed;
 }
 
+/** Manda o progresso da série para o AniList (o service worker confere conta, título e temporada). */
+async function syncAniList(entry: AnimeEntry): Promise<void> {
+  const watched = entry.episodesWatched || 0;
+  if (!(watched > 0) || !entry.title) return;
+  try {
+    const result = await chrome.runtime.sendMessage({ type: 'ANILIST_SYNC', id: entry.id, title: entry.title, watched }) as
+      { ok: boolean; title?: string; progress?: number; total?: number | null; reason?: string } | undefined;
+    if (result?.ok) showToast(t('AniList atualizado: {title} ({progress}{total})', { title: result.title || '', progress: result.progress ?? 0, total: result.total ? `/${result.total}` : '' }));
+  } catch {
+    // Service worker indisponível: tenta de novo na próxima atualização do progresso.
+  }
+}
+
 async function refreshProgress(): Promise<void> {
   const entry = page.entry;
   if (!entry) return;
@@ -305,6 +318,8 @@ async function refreshProgress(): Promise<void> {
     if (!before || before.id !== next.id || Math.abs(before.playhead - next.playhead) > 5) changed = true;
   }
   if (progress && applyProgress(entry, progress)) changed = true;
+  // O service worker ignora o que já foi enviado; assim o progresso antigo também sobe uma vez.
+  if ((entry.episodesWatched || 0) > 0) void syncAniList(entry);
   if (!changed) return;
   // Rascunho sem nada assistido continua só na memória, mas o contador aparece.
   if (page.draft && !(progress && progress.watched > 0)) paintGroup();
@@ -1121,6 +1136,7 @@ export async function incrementEpisode(): Promise<void> {
   else if (entry.status === 'watch_later') entry.status = 'watching';
   await commit(entry);
   showToast(t('Progresso: {count} episódio(s)', { count: entry.episodesWatched }));
+  void syncAniList(entry);
 }
 
 export function toggleCurrentEpisodeFav(): Promise<void> {

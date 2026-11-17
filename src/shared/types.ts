@@ -59,10 +59,14 @@ export const WRITER_KEY = 'boanimes_writer';
 export const LEGACY_STORAGE_KEY = 'crunchyboa_anime_data';
 export const LEGACY_SETTINGS_KEY = 'crunchyboa_settings';
 
+import type { AccentId } from './accent';
+
 export interface Settings {
   showBadges: boolean;
   syncAcrossDevices: boolean;
   themeEnabled: boolean;
+  /** Cor de destaque da extensão e da Crunchyroll. */
+  accent: AccentId;
   /** Cria/atualiza as Crunchylistas nativas Favoritas, Assistir Depois e Assistindo. */
   syncCrunchylists: boolean;
   anilistClientId: string;
@@ -101,6 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showBadges: true,
   syncAcrossDevices: false,
   themeEnabled: true,
+  accent: 'redrat',
   syncCrunchylists: false,
   anilistClientId: '',
   compactGrid: true,

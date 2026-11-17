@@ -4,7 +4,7 @@
  * Só estiliza elementos criados pela extensão (prefixo boa-). Nada aqui toca
  * no layout, nas cores ou nos componentes do próprio site, e não há
  * backdrop-filter nem sombras grandes: são dezenas de cards por página.
- * Medidas e cores copiam os botões nativos (ícone 24px, laranja #ff640a).
+ * Medidas e cores copiam os botões nativos (ícone 24px, laranja var(--boa-acc, #f02043)).
  */
 
 /* ----- Grupo de status: hero da série e ações do episódio ----- */
@@ -30,7 +30,7 @@
   margin: 0;
   border: 0;
   background: none;
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -54,7 +54,7 @@
 .boa-icon-btn:hover,
 .boa-player-btn:hover,
 .boa-card-btn:hover {
-  color: #ff9147;
+  color: var(--boa-acc-2, #ff5c78);
 }
 
 .boa-icon-btn:focus-visible,
@@ -103,7 +103,7 @@
   height: 24px;
   border-radius: 50%;
   background: rgba(0, 0, 0, .78);
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
   pointer-events: none;
 }
 
@@ -144,7 +144,7 @@
 }
 
 .episode-actions .boa-icon-btn[data-active="0"]:hover {
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 /* ----- Acesso rápido no header ----- */
@@ -167,7 +167,7 @@
 }
 
 .boa-quick-btn[aria-expanded="true"] {
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 .boa-quick-panel {
@@ -216,7 +216,7 @@
 
 .boa-quick-tab[aria-selected="true"] {
   background: #171717;
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 .boa-quick-list {
@@ -313,7 +313,7 @@
 
 .boa-ep-btn[data-active="1"],
 .boa-ep-btn:hover {
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 /* Contador de séries em andamento no botão do header */
@@ -329,8 +329,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #ff640a;
-  color: #1c0f04;
+  background: var(--boa-acc, #f02043);
+  color: var(--boa-on-acc, #fff);
   font: 700 10px/16px DMSans, 'Helvetica Neue', Helvetica, sans-serif;
   text-align: center;
   pointer-events: none;
@@ -389,8 +389,8 @@
 }
 
 .boa-row-arrow:hover {
-  background: #ff640a;
-  color: #1c0f04;
+  background: var(--boa-acc, #f02043);
+  color: var(--boa-on-acc, #fff);
 }
 
 /* ----- Setinha de detalhes nos cards ----- */
@@ -427,7 +427,7 @@
 }
 
 .boa-detail-btn:hover {
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 /* ----- Card de detalhes (popup) ----- */
@@ -503,17 +503,17 @@
 
 .boa-detail-open {
   border-color: transparent;
-  background: #ff640a;
-  color: #1c0f04;
+  background: var(--boa-acc, #f02043);
+  color: var(--boa-on-acc, #fff);
 }
 
 .boa-detail-pill:hover {
-  border-color: rgba(255, 100, 10, .6);
+  border-color: rgba(var(--boa-acc-rgb, 240, 32, 67), .6);
 }
 
 .boa-detail-pill[aria-pressed="true"] {
-  border-color: #ff640a;
-  color: #ff640a;
+  border-color: var(--boa-acc, #f02043);
+  color: var(--boa-acc, #f02043);
 }
 
 /* ----- Chaves de exibição no rodapé do painel rápido ----- */
@@ -540,8 +540,8 @@
 }
 
 .boa-quick-switch[aria-checked="true"] {
-  border-color: rgba(255, 100, 10, .6);
-  color: #ff640a;
+  border-color: rgba(var(--boa-acc-rgb, 240, 32, 67), .6);
+  color: var(--boa-acc, #f02043);
 }
 
 /* Com a grade desligada (ou o tema desligado) a fileira volta ao layout original do
@@ -598,7 +598,7 @@ html.boa-theme-off .boa-detail-btn {
 .boa-player-row input {
   grid-column: 1 / -1;
   width: 100%;
-  accent-color: #ff640a;
+  accent-color: var(--boa-acc, #f02043);
 }
 
 .boa-player-auto {
@@ -642,7 +642,7 @@ html.boa-theme-off .boa-player-wrap {
 .boa-prog > i {
   display: block;
   height: 100%;
-  background: #ff640a;
+  background: var(--boa-acc, #f02043);
 }
 
 /* ----- Botão "+" do cabeçalho: Simulcast, Jogos e Notícias ----- */
@@ -681,7 +681,7 @@ html.boa-theme-off .boa-player-wrap {
 
 .boa-more-btn:hover,
 .boa-more-btn[aria-expanded="true"] {
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
 }
 
 .boa-more-panel {
@@ -712,7 +712,7 @@ html.boa-theme-off .boa-player-wrap {
 
 .boa-more-item:hover,
 .boa-more-item:focus-visible {
-  background: rgba(255, 100, 10, .14);
+  background: rgba(var(--boa-acc-rgb, 240, 32, 67), .14);
   color: #fff;
   outline: 0;
 }
@@ -791,7 +791,7 @@ html.boa-theme-off .boa-more {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
-  color: #ff640a;
+  color: var(--boa-acc, #f02043);
   fill: currentColor;
 }
 
@@ -799,7 +799,7 @@ html.boa-theme-off .boa-more {
 .boa-account-item:hover,
 .boa-account-head:focus-visible,
 .boa-account-item:focus-visible {
-  background: rgba(255, 100, 10, .14);
+  background: rgba(var(--boa-acc-rgb, 240, 32, 67), .14);
   color: #fff;
   outline: 0;
 }

@@ -13,7 +13,8 @@ Extensão para **Chrome, Brave e navegadores baseados em Chromium** que melhora 
 ## O que ela faz
 
 **Visual**
-- Tema preto próprio, cabeçalho flutuante e cards redesenhados.
+- Tema preto próprio, cabeçalho flutuante e cards redesenhados, com cor de destaque à escolha: vermelho RedRat (padrão), laranja original e mais 6 cores, valendo no painel e na Crunchyroll.
+- Envio automático do progresso para o AniList, quando você conecta a conta (opcional).
 - Fileiras de séries em grade compacta (2 fileiras, pôster quadrado, título, Leg | Dub e botões), com setas laterais suaves. Dá para voltar ao layout original com um interruptor.
 - Cabeçalho sem barra: cada item é um botão com contorno, o botão "+" guarda Simulcast, Jogos e Notícias e o menu da conta é compacto. Ao rolar, sobram só o ícone da logo e o menu da conta.
 - Cards da grade transparentes, com os botões só no hover.

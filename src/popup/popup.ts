@@ -1,3 +1,4 @@
+import { ACCENTS, AccentId, applyAccent } from '../shared/accent';
 import { setLanguage, t, translateDom } from '../shared/i18n';
 import { storage, AnimeEntry, AnimeStatus, EpisodeFav } from '../shared/storage';
 import { Settings } from '../shared/types';
@@ -452,6 +453,28 @@ function setupSettings(): void {
     about.scrollIntoView({ block: 'start' });
   });
 
+  // Cor de destaque: vale no painel e na Crunchyroll (o site lê a mesma configuração).
+  const swatches = $('accentSwatches');
+  const paintSwatches = () => swatches.querySelectorAll<HTMLButtonElement>('.swatch').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.accent === settings.accent));
+  });
+  for (const [id, accent] of Object.entries(ACCENTS)) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'swatch';
+    button.dataset.accent = id;
+    button.style.background = accent.acc;
+    button.title = accent.label;
+    button.setAttribute('aria-label', accent.label);
+    button.addEventListener('click', async () => {
+      settings = await storage.updateSettings({ accent: id as AccentId });
+      applyAccent(settings.accent);
+      paintSwatches();
+    });
+    swatches.appendChild(button);
+  }
+  paintSwatches();
+
   const language = $('langSelect') as HTMLSelectElement;
   language.value = settings.language;
   language.addEventListener('change', async () => {
@@ -543,6 +566,7 @@ async function init(): Promise<void> {
   await storage.init();
   settings = await storage.getSettings();
   setLanguage(settings.language);
+  applyAccent(settings.accent);
   setupSettings();
   renderAll();
   translateDom(document.body);

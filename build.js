@@ -1,10 +1,17 @@
 import { build } from 'esbuild';
-import { copyFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 
 const isWatch = process.argv.includes('--watch');
 const outDir = resolve('dist');
-const anilistClientId = process.env.BOANIMES_ANILIST_CLIENT_ID || '';
+// Build da loja: BOANIMES_ANILIST_CLIENT_ID=57245 npm run build (sem chave fixa de extensão).
+// Build local (sem a variável): usa o cliente "BOAnimes (local)" do AniList e uma chave pública
+// fixa, que dá à extensão carregada sem compactação sempre o mesmo ID (ablpfmimhaininnbncnhlmijnckmaogf),
+// o ID que está no endereço de redirecionamento desse cliente.
+const DEV_CLIENT_ID = '57311';
+const DEV_KEY = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1K36o4vEhdvVWqwZa9dCyjBkhT5yfhPNuyLt3LmT+i23H9OsjY5sveK6z2e7wgisT7PoojaTVx2mdwdVQ62HTBxrsLqifBq9G1htuEtOLIqHvOIhgGQ52vQqQ7ylhL9wg791O9YYuTL+xRhhSSYKJhzUa+9f8Q0ohnIAbsohIKlA1xAvgireE4m/ArJ3SNhjjbRePc4Jwi5MlG9zfhdRsck68Z69ish6/4w7bekcG+8EROrB0igvko3Mp97A9skCbXdtkQccWj1YWydu0btd7Y8jTY79erxyll3lQwDpRkXHysUhpD/7mx2NMoJ8mP2X39DtLhKgpW9SAcHKgDg7+wIDAQAB';
+const storeBuild = Boolean(process.env.BOANIMES_ANILIST_CLIENT_ID);
+const anilistClientId = process.env.BOANIMES_ANILIST_CLIENT_ID || DEV_CLIENT_ID;
 
 if (!existsSync(outDir)) {
   mkdirSync(outDir, { recursive: true });
@@ -50,11 +57,14 @@ async function buildAll() {
       platform: 'browser',
       minify: !isWatch,
       sourcemap: isWatch,
-      external: ['chrome']
+      external: ['chrome'],
+      define: { BOANIMES_ANILIST_CLIENT_ID: JSON.stringify(anilistClientId) }
     });
     
     // Copy static files
-    copyFileSync('manifest.json', join(outDir, 'manifest.json'));
+    const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
+    if (!storeBuild) manifest.key = DEV_KEY;
+    writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
     copyFileSync('popup.html', join(outDir, 'popup.html'));
     
     // Copy styles

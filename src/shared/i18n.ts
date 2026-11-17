@@ -12,6 +12,7 @@ const add = (pt: string, en: string, es: string): void => { D[pt] = { en, es }; 
 
 /* ---------- botões e avisos da Crunchyroll ---------- */
 add('Player largo', 'Wide player', 'Reproductor ancho');
+add('AniList atualizado: {title} ({progress}{total})', 'AniList updated: {title} ({progress}{total})', 'AniList actualizado: {title} ({progress}{total})');
 add('Player normal', 'Normal player', 'Reproductor normal');
 add('Favoritar série', 'Favorite series', 'Marcar serie como favorita');
 add('Remover série das favoritas', 'Remove series from favorites', 'Quitar serie de favoritas');
@@ -148,6 +149,8 @@ add('Conta e dados', 'Account and data', 'Cuenta y datos');
 add('Idioma', 'Language', 'Idioma');
 add('Automático', 'Automatic', 'Automático');
 add('Tema BOAnimes', 'BOAnimes theme', 'Tema BOAnimes');
+add('Cor de destaque', 'Accent color', 'Color de acento');
+add('Muda a extensão e a Crunchyroll', 'Changes the extension and Crunchyroll', 'Cambia la extensión y Crunchyroll');
 add('Visual preto próprio no site', 'Own black look on the site', 'Aspecto negro propio en el sitio');
 add('Fileiras em grade', 'Grid rows', 'Filas en cuadrícula');
 add('Desligado, a home volta ao layout original', 'When off, the home page goes back to the original layout', 'Desactivado, la portada vuelve al diseño original');
